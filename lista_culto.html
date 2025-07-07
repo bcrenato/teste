@@ -323,15 +323,15 @@ function exportarLista(cultoDate, presentesData, membrosData) {
     
     // Títulos centralizados
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.text('Famílias vivendo na graça e unção do espírito', pageWidth/2, yPos, { align: 'center' });
+    doc.setFontSize(12);
+    doc.text('Famílias Vivendo na Graça e Unção do Espírito', pageWidth/2, yPos, { align: 'center' });
     yPos += lineHeight * 2;
     
     doc.setFontSize(16);
     doc.text('Lista presença culto', pageWidth/2, yPos, { align: 'center' });
     yPos += lineHeight;
     
-    doc.setFontSize(12);
+    doc.setFontSize(14);
     doc.text(formatarDataSimples(cultoDate), pageWidth/2, yPos, { align: 'center' });
     yPos += lineHeight * 2;
     
@@ -361,7 +361,7 @@ function exportarLista(cultoDate, presentesData, membrosData) {
       body: rows,
       margin: { left: margin, right: margin },
       styles: {
-        fontSize: 10,
+        fontSize: 12,
         cellPadding: 3,
         valign: 'middle'
       },
