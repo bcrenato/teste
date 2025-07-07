@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consulta de Presenças</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <style>
+    .culto-card {
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .culto-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .badge-member {
+      background-color: #0d6efd;
+    }
+    .badge-visitor {
+      background-color: #ffc107;
+      color: #000;
+    }
+    .count-badge {
+      background-color: #6c757d;
+      margin-left: 5px;
+    }
+    .navbar {
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body class="bg-light">
+  <!-- Navbar com botão de voltar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand" href="#">Consulta de Presenças</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="index.html">
+              <i class="bi bi-arrow-left"></i> Voltar para Cadastro
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container py-4">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Consulta de Presenças nos Cultos</h4>
+      </div>
+      <div class="card-body">
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <label for="data-inicio" class="form-label">Data Início</label>
+            <input type="date" id="data-inicio" class="form-control">
+          </div>
+          <div class="col-md-6">
+            <label for="data-fim" class="form-label">Data Fim</label>
+            <input type="date" id="data-fim" class="form-control">
+          </div>
+        </div>
+        
+        <button id="btn-buscar" class="btn btn-primary mb-4">
+          <i class="bi bi-search"></i> Buscar Cultos
+        </button>
+        
+        <div id="lista-cultos" class="row g-3"></div>
+        
+        <!-- Modal para detalhes do culto -->
+        <div class="modal fade" id="cultoModal" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="cultoModalTitle">Detalhes do Culto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <h6 id="cultoModalDate" class="mb-3"></h6>
+                <div id="cultoModalContent" class="list-group"></div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button id="btn-exportar" type="button" class="btn btn-success">
+                  <i class="bi bi-download"></i> Exportar Lista
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+  <script>
+    // Configuração do Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCv6pzl34tyPTARtGxV6g2AJfkrtQeA-xU",
+      authDomain: "cadastro-igreja-23042.firebaseapp.com",
+      databaseURL: "https://cadastro-igreja-23042-default-rtdb.firebaseio.com",
+      projectId: "cadastro-igreja-23042",
+      storageBucket: "cadastro-igreja-23042.firebasestorage.app",
+      messagingSenderId: "977906864836",
+      appId: "1:977906864836:web:1a21a29f4b941ac5aeaf91"
+    };
+    
+    // Inicializa o Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const cultoModal = new bootstrap.Modal(document.getElementById('cultoModal'));
+    
+    // Busca cultos por período
+    document.getElementById('btn-buscar').addEventListener('click', () => {
+      const dataInicio = document.getElementById('data-inicio').value;
+      const dataFim = document.getElementById('data-fim').value;
+      
+      if (!dataInicio || !dataFim) {
+        alert('Selecione ambas as datas');
+        return;
+      }
+      
+      buscarCultos(dataInicio, dataFim);
+    });
+    
+    // Busca os cultos no intervalo especificado
+    async function buscarCultos(dataInicio, dataFim) {
+      const listaCultos = document.getElementById('lista-cultos');
+      listaCultos.innerHTML = '<div class="col-12 text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+      
+      try {
+        const snapshot = await database.ref('presencas_culto').once('value');
+        const cultos = [];
+        
+        snapshot.forEach((childSnapshot) => {
+          const cultoData = childSnapshot.val();
+          const cultoId = childSnapshot.key;
+          const cultoDate = cultoData.data;
+          
+          // Verifica se está no intervalo
+          if (cultoDate >= dataInicio && cultoDate <= dataFim) {
+            // Conta membros e visitantes
+            let membros = 0;
+            let visitantes = 0;
+            
+            if (cultoData.presentes) {
+              Object.values(cultoData.presentes).forEach(valor => {
+                if (valor === true) membros++;
+                else visitantes++;
+              });
+            }
+            
+            cultos.push({
+              id: cultoId,
+              date: cultoDate,
+              totalPresentes: Object.keys(cultoData.presentes || {}).length,
+              membros: membros,
+              visitantes: visitantes
+            });
+          }
+        });
+        
+        // Ordena por data (mais recente primeiro)
+        cultos.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        exibirCultos(cultos);
+      } catch (error) {
+        console.error('Erro ao buscar cultos:', error);
+        listaCultos.innerHTML = '<div class="col-12 text-center text-danger py-4">Erro ao carregar os cultos</div>';
+      }
+    }
+    
+    // Exibe os cultos encontrados
+    function exibirCultos(cultos) {
+      const listaCultos = document.getElementById('lista-cultos');
+      listaCultos.innerHTML = '';
+      
+      if (cultos.length === 0) {
+        listaCultos.innerHTML = '<div class="col-12 text-center text-muted py-4">Nenhum culto encontrado neste período</div>';
+        return;
+      }
+      
+      cultos.forEach(culto => {
+        const col = document.createElement('div');
+        col.className = 'col-md-6 col-lg-4';
+        
+        const card = document.createElement('div');
+        card.className = 'card culto-card mb-3';
+        card.innerHTML = `
+          <div class="card-body">
+            <h5 class="card-title">${formatarData(culto.date)}</h5>
+            <p class="card-text">
+              ${culto.totalPresentes} ${culto.totalPresentes === 1 ? 'presente' : 'presentes'}
+              <span class="badge count-badge">${culto.membros} membros</span>
+              <span class="badge count-badge">${culto.visitantes} visitantes</span>
+            </p>
+            <button class="btn btn-sm btn-outline-primary" data-cultoid="${culto.id}" data-cultodate="${culto.date}">
+              Ver lista completa
+            </button>
+          </div>
+        `;
+        
+        col.appendChild(card);
+        listaCultos.appendChild(col);
+      });
+      
+      // Adiciona eventos aos botões
+      document.querySelectorAll('[data-cultoid]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const cultoId = e.target.getAttribute('data-cultoid');
+          const cultoDate = e.target.getAttribute('data-cultodate');
+          carregarDetalhesCulto(cultoId, cultoDate);
+        });
+      });
+    }
+    
+    // Carrega os detalhes de um culto específico
+    async function carregarDetalhesCulto(cultoId, cultoDate) {
+      const modalTitle = document.getElementById('cultoModalTitle');
+      const modalDate = document.getElementById('cultoModalDate');
+      const modalContent = document.getElementById('cultoModalContent');
+      
+      modalTitle.textContent = 'Lista de Presença';
+      modalDate.textContent = `Culto de ${formatarData(cultoDate)}`;
+      modalContent.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+      
+      try {
+        const snapshot = await database.ref(`presencas_culto/${cultoId}/presentes`).once('value');
+        const presentesData = snapshot.val();
+        
+        // Busca os nomes dos membros
+        const membrosSnapshot = await database.ref('membros').once('value');
+        const membrosData = membrosSnapshot.val();
+        
+        modalContent.innerHTML = '';
+        
+        for (const [id, valor] of Object.entries(presentesData || {})) {
+          const item = document.createElement('div');
+          item.className = 'list-group-item d-flex justify-content-between align-items-center';
+          
+          if (valor === true) {
+            // É um membro (armazenado por ID)
+            const nome = membrosData[id]?.nome || `Membro (ID: ${id})`;
+            const funcao = membrosData[id]?.funcao ? ` - ${membrosData[id].funcao}` : '';
+            
+            item.innerHTML = `
+              <div>${nome}${funcao}</div>
+              <span class="badge badge-member rounded-pill">Membro</span>
+            `;
+          } else {
+            // É um visitante (armazenado por nome)
+            item.innerHTML = `
+              <div>${valor}</div>
+              <span class="badge badge-visitor rounded-pill">Visitante</span>
+            `;
+          }
+          
+          modalContent.appendChild(item);
+        }
+        
+        // Atualiza o botão de exportar
+        document.getElementById('btn-exportar').onclick = () => exportarLista(cultoDate, presentesData, membrosData);
+        
+        cultoModal.show();
+      } catch (error) {
+        console.error('Erro ao carregar detalhes:', error);
+        modalContent.innerHTML = '<div class="text-center text-danger py-4">Erro ao carregar a lista de presença</div>';
+      }
+    }
+    
+    // Formata a data para exibição
+    function formatarData(dataString) {
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      const date = new Date(dataString);
+      // Ajusta para o fuso horário local
+      date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+      return date.toLocaleDateString('pt-BR', options);
+    }
+    
+    // Exporta a lista para CSV
+    function exportarLista(cultoDate, presentesData, membrosData) {
+      let csvContent = "data:text/csv;charset=utf-8,";
+      csvContent += `Lista de Presença - ${formatarData(cultoDate)}\n\n`;
+      csvContent += "Nome,Tipo,Função\n";
+      
+      for (const [id, valor] of Object.entries(presentesData || {})) {
+        if (valor === true) {
+          // Membro
+          const nome = membrosData[id]?.nome || `Membro (ID: ${id})`;
+          const funcao = membrosData[id]?.funcao || '';
+          csvContent += `${nome},Membro,${funcao}\n`;
+        } else {
+          // Visitante
+          csvContent += `${valor},Visitante,\n`;
+        }
+      }
+      
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `presenca_${cultoDate}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+    
+    // Inicializa a aplicação
+    document.addEventListener('DOMContentLoaded', () => {
+      // Define datas padrão (últimos 30 dias)
+      const fim = new Date();
+      const inicio = new Date();
+      inicio.setDate(inicio.getDate() - 30);
+      
+      document.getElementById('data-inicio').value = inicio.toISOString().split('T')[0];
+      document.getElementById('data-fim').value = fim.toISOString().split('T')[0];
+      
+      // Busca automaticamente
+      document.getElementById('btn-buscar').click();
+    });
+  </script>
+</body>
+</html>
