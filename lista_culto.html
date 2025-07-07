@@ -286,106 +286,102 @@
       return date.toLocaleDateString('pt-BR', options);
     }
     
-    // Exporta a lista para PDF
+    // Exporta a lista para PDF// Função completa para exportar em PDF com logo PNG otimizado
 function exportarLista(cultoDate, presentesData, membrosData) {
   const { jsPDF } = window.jspdf;
-  
-  // 1. Cria PDF com compressão avançada
   const doc = new jsPDF({
     unit: 'pt',
     compress: true,
-    filters: ['ASCIIHexEncode'] // Filtro adicional de compressão
+    filters: ['ASCIIHexEncode']
   });
 
-  // Configurações mantidas conforme seu original
+  // Configurações de layout
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 15;
   const lineHeight = 7;
   let yPos = 15;
 
-  // 2. Função otimizada para adicionar logo PNG
-  const addLogoPNG = () => {
+  // 1. Função para adicionar logo PNG otimizado
+  const addOptimizedPNGLogo = () => {
     return new Promise((resolve) => {
       const img = new Image();
       
       img.onload = function() {
-        // 3. Otimização inteligente do PNG sem perder qualidade visível
+        // Cria canvas para otimização
         const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
         canvas.width = this.naturalWidth;
         canvas.height = this.naturalHeight;
-        
-        const ctx = canvas.getContext('2d');
         ctx.drawImage(this, 0, 0);
         
-        // 4. Reduz paleta de cores para PNG-8 se possível (mantendo transparência)
+        // Converte para PNG com otimização
         const optimizedPNG = canvas.toDataURL('image/png', {
-          quality: 0.9, // Qualidade quase máxima
-          compressionLevel: 6 // Nível de compressão médio
+          quality: 0.95,
+          compressionLevel: 6
         });
         
-        // 5. Adiciona ao PDF mantendo dimensões originais
+        // Adiciona ao PDF mantendo dimensões originais
         doc.addImage(
           optimizedPNG,
           'PNG',
-          (pageWidth - 50) / 2, // Centralizado
+          (pageWidth - 50) / 2,
           yPos,
-          50, // Largura original
-          30  // Altura original
+          50,
+          30
         );
         
-        yPos += 30 + 10; // Espaçamento
+        yPos += 40; // Espaço após o logo
         resolve();
       };
       
-      img.onerror = () => resolve(); // Continua sem logo se houver erro
-      img.src = 'logo.png'; // Mantém PNG como solicitado
+      img.onerror = () => {
+        console.warn('Logo não carregado, continuando sem ele');
+        resolve();
+      };
+      
+      img.src = 'logo.png';
     });
   };
 
-  // 6. Função principal (mantida igual, apenas com ajuste de await)
+  // 2. Função principal
   const generatePDF = async () => {
-    await addLogoPNG();
+    // Adiciona logo (se disponível)
+    await addOptimizedPNGLogo();
     
-    // Restante do seu código original SEM ALTERAÇÕES VISUAIS
-    doc.setFontSize(14);
+    // Cabeçalho
     doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
     doc.text('Famílias vivendo na graça e unção do espírito', pageWidth/2, yPos, { align: 'center' });
     yPos += lineHeight * 2;
     
-    // Título do documento
     doc.setFontSize(16);
     doc.text('Lista presença culto', pageWidth/2, yPos, { align: 'center' });
     yPos += lineHeight;
     
-    // Data formatada
     doc.setFontSize(12);
     doc.text(formatarDataSimples(cultoDate), pageWidth/2, yPos, { align: 'center' });
     yPos += lineHeight * 2;
-    
-    // Cabeçalho da tabela
+
+    // Prepara dados da tabela
     const headers = [['Nome', 'Função']];
     const rows = [];
-    
-    // Contadores
     let membrosCount = 0;
     let visitantesCount = 0;
-    
-    // Preenche os dados
-    for (const [id, valor] of Object.entries(presentesData || {})) {
+
+    Object.entries(presentesData || {}).forEach(([id, valor]) => {
       if (valor === true) {
-        // Membro
-        const nome = membrosData[id]?.nome || `Membro (ID: ${id})`;
-        const funcao = membrosData[id]?.funcao || 'Membro';
-        rows.push([nome, funcao]);
+        rows.push([
+          membrosData[id]?.nome || `Membro (ID: ${id})`,
+          membrosData[id]?.funcao || 'Membro'
+        ]);
         membrosCount++;
       } else {
-        // Visitante
         rows.push([valor, 'Visitante']);
         visitantesCount++;
       }
-    }
-    
-    // Adiciona a tabela
+    });
+
+    // Adiciona tabela
     doc.autoTable({
       startY: yPos,
       head: headers,
@@ -405,30 +401,31 @@ function exportarLista(cultoDate, presentesData, membrosData) {
         fillColor: [240, 240, 240]
       }
     });
-    
-    // Atualiza a posição Y após a tabela
-    yPos = doc.lastAutoTable.finalY + 10;
-    
+
     // Adiciona totais
+    yPos = doc.lastAutoTable.finalY + 10;
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     doc.text('Presentes:', margin, yPos);
-    yPos += lineHeight;
-    doc.text(`Membros - ${membrosCount}`, margin, yPos);
-    yPos += lineHeight;
-    doc.text(`Visitantes - ${visitantesCount}`, margin, yPos);
-    
-     // Salva o PDF
-    // 7. Gera PDF otimizado
+    doc.text(`Membros - ${membrosCount}`, margin + 30, yPos);
+    doc.text(`Visitantes - ${visitantesCount}`, margin + 80, yPos);
+
+    // Salva o PDF
     const pdfOutput = doc.output('blob');
     console.log('Tamanho final do PDF:', (pdfOutput.size / 1024).toFixed(1), 'KB');
-    doc.save(`presenca_${cultoDate}.pdf`);
+    doc.save(`presenca_${cultoDate.replace(/-/g, '_')}.pdf`);
   };
 
-// Função auxiliar para formatar data simples
+  // Executa a geração
+  generatePDF().catch(error => {
+    console.error('Erro ao gerar PDF:', error);
+    alert('Ocorreu um erro ao gerar o PDF');
+  });
+}
+
+// Função auxiliar para formatar data (mantida do original)
 function formatarDataSimples(dataString) {
   const date = new Date(dataString);
-  // Ajusta para o fuso horário local
   date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
   const options = { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' };
   return date.toLocaleDateString('pt-BR', options);
