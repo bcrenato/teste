@@ -297,97 +297,131 @@
     }
     
     // Exporta a lista para PDF
-    function exportarLista(cultoDate, presentesData, membrosData) {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      
-      // Configurações
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const margin = 15;
-      const lineHeight = 7;
-      let yPos = 20;
-
-
-        // Adiciona logo (substitua logo.png pelo caminho correto da sua 
-      doc.addImage('logo.png', 'PNG', pageWidth/2 - 25, yPos, 50, 50);
-      yPos += 60;
+    // Exporta a lista para PDF (versão completa e aprimorada)
+function exportarLista(cultoDate, presentesData, membrosData) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
   
+  // Configurações do documento
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 15;
+  const lineHeight = 7;
+  let yPos = 15;
+  
+  // Configurações do logo
+  const logoConfig = {
+    width: 50, // Largura desejada em pontos (1cm ≈ 28.35 pontos)
+    maxHeight: 30, // Altura máxima permitida
+    src: 'logo.png', // Ou URL/base64
+    paddingBottom: 10 // Espaço após o logo
+  };
+  
+  // Função para adicionar conteúdo após carregar o logo
+  const addContent = (logoHeight = 0) => {
+    // Ajusta a posição Y considerando o logo (se carregado)
+    yPos += logoHeight > 0 ? logoHeight + logoConfig.paddingBottom : 0;
+    
+    // Títulos centralizados
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text('Famílias vivendo na graça e unção do espírito', pageWidth/2, yPos, { align: 'center' });
+    yPos += lineHeight * 2;
+    
+    doc.setFontSize(16);
+    doc.text('Lista presença culto', pageWidth/2, yPos, { align: 'center' });
+    yPos += lineHeight;
+    
+    doc.setFontSize(12);
+    doc.text(formatarDataSimples(cultoDate), pageWidth/2, yPos, { align: 'center' });
+    yPos += lineHeight * 2;
+    
+    // Prepara dados da tabela
+    const headers = [['Nome', 'Função']];
+    const rows = [];
+    let membrosCount = 0;
+    let visitantesCount = 0;
+    
+    Object.entries(presentesData || {}).forEach(([id, valor]) => {
+      if (valor === true) {
+        rows.push([
+          membrosData[id]?.nome || `Membro (ID: ${id})`,
+          membrosData[id]?.funcao || 'Membro'
+        ]);
+        membrosCount++;
+      } else {
+        rows.push([valor, 'Visitante']);
+        visitantesCount++;
+      }
+    });
+    
+    // Adiciona tabela
+    doc.autoTable({
+      startY: yPos,
+      head: headers,
+      body: rows,
+      margin: { left: margin, right: margin },
+      styles: {
+        fontSize: 10,
+        cellPadding: 3,
+        valign: 'middle'
+      },
+      headStyles: {
+        fillColor: [13, 110, 253],
+        textColor: 255,
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: {
+        fillColor: [240, 240, 240]
+      }
+    });
+    
+    // Adiciona totais
+    yPos = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(12);
+    doc.text('Presentes:', margin, yPos);
+    doc.text(`Membros - ${membrosCount}`, margin + 30, yPos);
+    doc.text(`Visitantes - ${visitantesCount}`, margin + 80, yPos);
+    
+    // Salva o PDF
+    doc.save(`presenca_${cultoDate.replace(/-/g, '_')}.pdf`);
+  };
+  
+  // Tenta carregar o logo
+  try {
+    const logoImg = new Image();
+    logoImg.onload = () => {
+      // Calcula altura proporcional respeitando a altura máxima
+      const aspectRatio = logoImg.height / logoImg.width;
+      let height = logoConfig.width * aspectRatio;
       
-      // Título da igreja
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Famílias vivendo na graça e unção do espírito', pageWidth/2, yPos, { align: 'center' });
-      yPos += lineHeight * 2;
-      
-      // Título do documento
-      doc.setFontSize(16);
-      doc.text('Lista presença culto', pageWidth/2, yPos, { align: 'center' });
-      yPos += lineHeight;
-      
-      // Data formatada
-      doc.setFontSize(12);
-      doc.text(formatarDataSimples(cultoDate), pageWidth/2, yPos, { align: 'center' });
-      yPos += lineHeight * 2;
-      
-      // Cabeçalho da tabela
-      const headers = [['Nome', 'Função']];
-      const rows = [];
-      
-      // Contadores
-      let membrosCount = 0;
-      let visitantesCount = 0;
-      
-      // Preenche os dados
-      for (const [id, valor] of Object.entries(presentesData || {})) {
-        if (valor === true) {
-          // Membro
-          const nome = membrosData[id]?.nome || `Membro (ID: ${id})`;
-          const funcao = membrosData[id]?.funcao || 'Membro';
-          rows.push([nome, funcao]);
-          membrosCount++;
-        } else {
-          // Visitante
-          rows.push([valor, 'Visitante']);
-          visitantesCount++;
-        }
+      if (height > logoConfig.maxHeight) {
+        height = logoConfig.maxHeight;
       }
       
-      // Adiciona a tabela
-      doc.autoTable({
-        startY: yPos,
-        head: headers,
-        body: rows,
-        margin: { left: margin, right: margin },
-        styles: {
-          fontSize: 10,
-          cellPadding: 3,
-          valign: 'middle'
-        },
-        headStyles: {
-          fillColor: [13, 110, 253],
-          textColor: 255,
-          fontStyle: 'bold'
-        },
-        alternateRowStyles: {
-          fillColor: [240, 240, 240]
-        }
-      });
+      // Centraliza e adiciona o logo
+      doc.addImage(
+        logoImg, 
+        'PNG', 
+        (pageWidth - logoConfig.width) / 2, 
+        yPos, 
+        logoConfig.width, 
+        height
+      );
       
-      // Atualiza a posição Y após a tabela
-      yPos = doc.lastAutoTable.finalY + 10;
-      
-      // Adiciona totais
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Presentes:', margin, yPos);
-      yPos += lineHeight;
-      doc.text(`Membros - ${membrosCount}`, margin, yPos);
-      yPos += lineHeight;
-      doc.text(`Visitantes - ${visitantesCount}`, margin, yPos);
-      
-      // Salva o PDF
-      doc.save(`presenca_${cultoDate}.pdf`);
-    }
+      addContent(height);
+    };
+    
+    logoImg.onerror = () => {
+      console.warn('Logo não carregado, continuando sem ele');
+      addContent();
+    };
+    
+    logoImg.src = logoConfig.src;
+  } catch (error) {
+    console.error('Erro ao processar logo:', error);
+    addContent();
+  }
+}
     
     // Inicializa a aplicação
     document.addEventListener('DOMContentLoaded', () => {
