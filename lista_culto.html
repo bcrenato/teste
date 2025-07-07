@@ -370,42 +370,43 @@ function exportarLista(cultoDate, presentesData, membrosData) {
         visitantesCount++;
       }
     }
-  
-  // Adiciona a tabela
-  doc.autoTable({
-    startY: yPos,
-    head: headers,
-    body: rows,
-    margin: { left: margin, right: margin },
-    styles: {
-      fontSize: 10,
-      cellPadding: 3,
-      valign: 'middle'
-    },
-    headStyles: {
-      fillColor: [13, 110, 253], // Cor azul do bootstrap
-      textColor: 255,
-      fontStyle: 'bold'
-    },
-    alternateRowStyles: {
-      fillColor: [240, 240, 240]
-    }
-  });
-  
-  // Atualiza a posição Y após a tabela
-  yPos = doc.lastAutoTable.finalY + 10;
-  
-  // Adiciona totais
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Presentes:', margin, yPos);
-  yPos += lineHeight;
-  doc.text(`Membros - ${membrosCount}`, margin, yPos);
-  yPos += lineHeight;
-  doc.text(`Visitantes - ${visitantesCount}`, margin, yPos);
-  
-  // Salva o PDF
-  doc.save(`presenca_${cultoDate}.pdf`);
+    
+    // Adiciona a tabela
+    doc.autoTable({
+      startY: yPos,
+      head: headers,
+      body: rows,
+      margin: { left: margin, right: margin },
+      styles: {
+        fontSize: 10,
+        cellPadding: 3,
+        valign: 'middle'
+      },
+      headStyles: {
+        fillColor: [13, 110, 253],
+        textColor: 255,
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: {
+        fillColor: [240, 240, 240]
+      }
+    });
+    
+    // Atualiza a posição Y após a tabela
+    yPos = doc.lastAutoTable.finalY + 10;
+    
+    // Adiciona totais
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Presentes:', margin, yPos);
+    yPos += lineHeight;
+    doc.text(`Membros - ${membrosCount}`, margin, yPos);
+    yPos += lineHeight;
+    doc.text(`Visitantes - ${visitantesCount}`, margin, yPos);
+    
+    // Salva o PDF
+    doc.save(`presenca_${cultoDate}.pdf`);
+  }
 }
 
 // Função auxiliar para formatar data simples
