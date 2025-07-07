@@ -1,25 +1,240 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Telefone com Máscara</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Controle de Presença</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Biblioteca de máscara -->
-  <script src="https://unpkg.com/imask"></script>
+  <style>
+    .search-box {
+      position: relative;
+    }
+    .search-results {
+      position: absolute;
+      width: 100%;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+      display: none;
+    }
+    .presente-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  </style>
 </head>
-<body class="container mt-5">
-
-  <h2>Cadastro de Telefone</h2>
-
-  <form>
-    <div class="mb-3">
-      <label for="telefone" class="form-label">Telefone:</label>
-      <input type="text" class="form-control" id="telefone" placeholder="(00) 00000-0000">
+<body class="bg-light">
+  <div class="container py-4">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Registro de Presença - Culto</h4>
+      </div>
+      <div class="card-body">
+        <div class="mb-4">
+          <label for="data-culto" class="form-label">Data do Culto</label>
+          <input type="date" id="data-culto" class="form-control">
+        </div>
+        
+        <div class="search-box mb-3">
+          <label for="busca-nome" class="form-label">Buscar Nome</label>
+          <input type="text" id="busca-nome" class="form-control" placeholder="Digite para buscar...">
+          <div id="resultados-busca" class="search-results list-group"></div>
+        </div>
+        
+        <button id="btn-adicionar-manual" class="btn btn-outline-secondary mb-3">
+          Adicionar Nome Manualmente
+        </button>
+        
+        <div class="mb-3" id="adicionar-manual-box" style="display: none;">
+          <div class="input-group">
+            <input type="text" id="novo-nome" class="form-control" placeholder="Nome completo">
+            <button id="btn-confirmar-nome" class="btn btn-primary">Adicionar</button>
+          </div>
+        </div>
+        
+        <h5 class="mt-4 mb-3">Lista de Presentes</h5>
+        <div id="lista-presentes" class="list-group"></div>
+        
+        <button id="btn-salvar" class="btn btn-success mt-4 w-100 py-2">
+          <i class="bi bi-save"></i> Salvar Relação
+        </button>
+      </div>
     </div>
-  </form>
+  </div>
 
-  <!-- Carregando o JavaScript com a máscara -->
-  <script src="app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+  <script>
+    // Configuração do Firebase
+    const firebaseConfig = {
+      apiKey: "SUA_API_KEY",
+      authDomain: "SEU_PROJETO.firebaseapp.com",
+      databaseURL: "https://SEU_PROJETO.firebaseio.com",
+      projectId: "SEU_PROJETO",
+      storageBucket: "SEU_PROJETO.appspot.com",
+      messagingSenderId: "SEU_SENDER_ID",
+      appId: "SEU_APP_ID"
+    };
+    
+    // Inicializa o Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    
+    // Variáveis globais
+    let membrosCadastrados = [];
+    let presentes = [];
+    
+    // Carrega os nomes do cadastro
+    function carregarMembros() {
+      database.ref('cadastro').once('value').then((snapshot) => {
+        membrosCadastrados = [];
+        snapshot.forEach((childSnapshot) => {
+          const membro = {
+            id: childSnapshot.key,
+            nome: childSnapshot.val().nome
+          };
+          membrosCadastrados.push(membro);
+        });
+      });
+    }
+    
+    // Busca nomes conforme digitação
+    document.getElementById('busca-nome').addEventListener('input', (e) => {
+      const termo = e.target.value.toLowerCase();
+      const resultados = document.getElementById('resultados-busca');
+      
+      if (termo.length < 2) {
+        resultados.style.display = 'none';
+        return;
+      }
+      
+      const matches = membrosCadastrados.filter(membro => 
+        membro.nome.toLowerCase().includes(termo)
+        .slice(0, 5);
+      
+      resultados.innerHTML = '';
+      
+      if (matches.length > 0) {
+        matches.forEach(membro => {
+          const item = document.createElement('button');
+          item.className = 'list-group-item list-group-item-action';
+          item.textContent = membro.nome;
+          item.addEventListener('click', () => {
+            adicionarPresente(membro.id, membro.nome);
+            resultados.style.display = 'none';
+            e.target.value = '';
+          });
+          resultados.appendChild(item);
+        });
+        resultados.style.display = 'block';
+      } else {
+        resultados.style.display = 'none';
+      }
+    });
+    
+    // Adiciona nome à lista de presentes
+    function adicionarPresente(id, nome) {
+      if (presentes.some(p => p.id === id || p.nome === nome)) return;
+      
+      presentes.push({ id, nome });
+      atualizarListaPresentes();
+    }
+    
+    // Atualiza a lista visível de presentes
+    function atualizarListaPresentes() {
+      const lista = document.getElementById('lista-presentes');
+      lista.innerHTML = '';
+      
+      presentes.forEach((pessoa, index) => {
+        const item = document.createElement('div');
+        item.className = 'list-group-item presente-item';
+        
+        item.innerHTML = `
+          <span>${pessoa.nome}</span>
+          <button class="btn btn-sm btn-outline-danger" data-index="${index}">
+            <i class="bi bi-x"></i>
+          </button>
+        `;
+        
+        lista.appendChild(item);
+      });
+      
+      // Adiciona eventos aos botões de remover
+      document.querySelectorAll('#lista-presentes .btn-outline-danger').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const index = parseInt(e.target.closest('button').dataset.index);
+          presentes.splice(index, 1);
+          atualizarListaPresentes();
+        });
+      });
+    }
+    
+    // Mostra/oculta campo para adicionar nome manualmente
+    document.getElementById('btn-adicionar-manual').addEventListener('click', () => {
+      const box = document.getElementById('adicionar-manual-box');
+      box.style.display = box.style.display === 'none' ? 'block' : 'none';
+      document.getElementById('busca-nome').value = '';
+      document.getElementById('resultados-busca').style.display = 'none';
+    });
+    
+    // Adiciona nome manualmente
+    document.getElementById('btn-confirmar-nome').addEventListener('click', () => {
+      const nome = document.getElementById('novo-nome').value.trim();
+      if (nome) {
+        adicionarPresente('manual_' + Date.now(), nome);
+        document.getElementById('novo-nome').value = '';
+        document.getElementById('adicionar-manual-box').style.display = 'none';
+      }
+    });
+    
+    // Salva a relação no Firebase
+    document.getElementById('btn-salvar').addEventListener('click', () => {
+      const dataCulto = document.getElementById('data-culto').value;
+      if (!dataCulto) {
+        alert('Selecione a data do culto');
+        return;
+      }
+      
+      if (presentes.length === 0) {
+        alert('Adicione pelo menos um nome à lista');
+        return;
+      }
+      
+      const relacao = {};
+      presentes.forEach(pessoa => {
+        if (pessoa.id.startsWith('manual_')) {
+          // Gera um ID único para visitantes
+          const visitanteId = 'visitante_' + Date.now();
+          relacao[visitanteId] = pessoa.nome;
+        } else {
+          relacao[pessoa.id] = true;
+        }
+      });
+      
+      const cultoId = 'culto_' + dataCulto.replace(/-/g, '_');
+      database.ref('relacao_presenca/' + cultoId + '/presentes').set(relacao)
+        .then(() => {
+          alert('Relação salva com sucesso!');
+          presentes = [];
+          atualizarListaPresentes();
+        })
+        .catch(error => {
+          console.error('Erro ao salvar:', error);
+          alert('Erro ao salvar a relação');
+        });
+    });
+    
+    // Inicializa a aplicação
+    document.addEventListener('DOMContentLoaded', () => {
+      // Define a data atual como padrão
+      const hoje = new Date().toISOString().split('T')[0];
+      document.getElementById('data-culto').value = hoje;
+      
+      // Carrega os membros cadastrados
+      carregarMembros();
+    });
+  </script>
 </body>
 </html>
