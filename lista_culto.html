@@ -425,9 +425,11 @@ function exportarLista(cultoDate, presentesData, membrosData) {
     yPos += lineHeight;
     doc.text(`Visitantes - ${visitantesCount}`, margin, yPos);
     
-    // Salva o PDF
+     // Salva o PDF
     doc.save(`presenca_${cultoDate}.pdf`);
-  }
+  };
+
+  completePDF().catch(console.error);
 }
 
 // Função auxiliar para formatar data simples
