@@ -286,32 +286,105 @@
       return date.toLocaleDateString('pt-BR', options);
     }
     
-    // Exporta a lista para CSV
-    function exportarLista(cultoDate, presentesData, membrosData) {
-      let csvContent = "data:text/csv;charset=utf-8,";
-      csvContent += `Lista de Presença - ${formatarData(cultoDate)}\n\n`;
-      csvContent += "Nome,Tipo,Função\n";
-      
-      for (const [id, valor] of Object.entries(presentesData || {})) {
-        if (valor === true) {
-          // Membro
-          const nome = membrosData[id]?.nome || `Membro (ID: ${id})`;
-          const funcao = membrosData[id]?.funcao || '';
-          csvContent += `${nome},Membro,${funcao}\n`;
-        } else {
-          // Visitante
-          csvContent += `${valor},Visitante,\n`;
-        }
-      }
-      
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `presenca_${cultoDate}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    // Exporta a lista para PDF
+function exportarLista(cultoDate, presentesData, membrosData) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  
+  // Configurações
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 15;
+  const lineHeight = 7;
+  let yPos = 20;
+  
+  // Adiciona logo (substitua logo.png pelo caminho correto da sua imagem)
+  // doc.addImage('logo.png', 'PNG', pageWidth/2 - 25, yPos, 50, 50);
+  // yPos += 60;
+  
+  // Título da igreja
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Famílias vivendo na graça e unção do espírito', pageWidth/2, yPos, { align: 'center' });
+  yPos += lineHeight * 2;
+  
+  // Título do documento
+  doc.setFontSize(16);
+  doc.text('Lista presença culto', pageWidth/2, yPos, { align: 'center' });
+  yPos += lineHeight;
+  
+  // Data formatada
+  doc.setFontSize(12);
+  doc.text(formatarDataSimples(cultoDate), pageWidth/2, yPos, { align: 'center' });
+  yPos += lineHeight * 2;
+  
+  // Cabeçalho da tabela
+  const headers = [['Nome', 'Função']];
+  const rows = [];
+  
+  // Contadores
+  let membrosCount = 0;
+  let visitantesCount = 0;
+  
+  // Preenche os dados
+  for (const [id, valor] of Object.entries(presentesData || {})) {
+    if (valor === true) {
+      // Membro
+      const nome = membrosData[id]?.nome || `Membro (ID: ${id})`;
+      const funcao = membrosData[id]?.funcao || 'Membro';
+      rows.push([nome, funcao]);
+      membrosCount++;
+    } else {
+      // Visitante
+      rows.push([valor, 'Visitante']);
+      visitantesCount++;
     }
+  }
+  
+  // Adiciona a tabela
+  doc.autoTable({
+    startY: yPos,
+    head: headers,
+    body: rows,
+    margin: { left: margin, right: margin },
+    styles: {
+      fontSize: 10,
+      cellPadding: 3,
+      valign: 'middle'
+    },
+    headStyles: {
+      fillColor: [13, 110, 253], // Cor azul do bootstrap
+      textColor: 255,
+      fontStyle: 'bold'
+    },
+    alternateRowStyles: {
+      fillColor: [240, 240, 240]
+    }
+  });
+  
+  // Atualiza a posição Y após a tabela
+  yPos = doc.lastAutoTable.finalY + 10;
+  
+  // Adiciona totais
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Presentes:', margin, yPos);
+  yPos += lineHeight;
+  doc.text(`Membros - ${membrosCount}`, margin, yPos);
+  yPos += lineHeight;
+  doc.text(`Visitantes - ${visitantesCount}`, margin, yPos);
+  
+  // Salva o PDF
+  doc.save(`presenca_${cultoDate}.pdf`);
+}
+
+// Função auxiliar para formatar data simples
+function formatarDataSimples(dataString) {
+  const date = new Date(dataString);
+  // Ajusta para o fuso horário local
+  date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+  const options = { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' };
+  return date.toLocaleDateString('pt-BR', options);
+}
     
     // Inicializa a aplicação
     document.addEventListener('DOMContentLoaded', () => {
@@ -327,5 +400,11 @@
       document.getElementById('btn-buscar').click();
     });
   </script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+
+  
 </body>
 </html>
