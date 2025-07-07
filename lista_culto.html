@@ -22,6 +22,10 @@
       background-color: #ffc107;
       color: #000;
     }
+    .count-badge {
+      background-color: #6c757d;
+      margin-left: 5px;
+    }
   </style>
 </head>
 <body class="bg-light">
@@ -80,12 +84,12 @@
     // Configuração do Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyCv6pzl34tyPTARtGxV6g2AJfkrtQeA-xU",
-  authDomain: "cadastro-igreja-23042.firebaseapp.com",
-  databaseURL: "https://cadastro-igreja-23042-default-rtdb.firebaseio.com",
-  projectId: "cadastro-igreja-23042",
-  storageBucket: "cadastro-igreja-23042.firebasestorage.app",
-  messagingSenderId: "977906864836",
-  appId: "1:977906864836:web:1a21a29f4b941ac5aeaf91"
+      authDomain: "cadastro-igreja-23042.firebaseapp.com",
+      databaseURL: "https://cadastro-igreja-23042-default-rtdb.firebaseio.com",
+      projectId: "cadastro-igreja-23042",
+      storageBucket: "cadastro-igreja-23042.firebasestorage.app",
+      messagingSenderId: "977906864836",
+      appId: "1:977906864836:web:1a21a29f4b941ac5aeaf91"
     };
     
     // Inicializa o Firebase
@@ -122,10 +126,23 @@
           
           // Verifica se está no intervalo
           if (cultoDate >= dataInicio && cultoDate <= dataFim) {
+            // Conta membros e visitantes
+            let membros = 0;
+            let visitantes = 0;
+            
+            if (cultoData.presentes) {
+              Object.values(cultoData.presentes).forEach(valor => {
+                if (valor === true) membros++;
+                else visitantes++;
+              });
+            }
+            
             cultos.push({
               id: cultoId,
               date: cultoDate,
-              totalPresentes: Object.keys(cultoData.presentes).length
+              totalPresentes: Object.keys(cultoData.presentes || {}).length,
+              membros: membros,
+              visitantes: visitantes
             });
           }
         });
@@ -159,7 +176,11 @@
         card.innerHTML = `
           <div class="card-body">
             <h5 class="card-title">${formatarData(culto.date)}</h5>
-            <p class="card-text">${culto.totalPresentes} ${culto.totalPresentes === 1 ? 'presente' : 'presentes'}</p>
+            <p class="card-text">
+              ${culto.totalPresentes} ${culto.totalPresentes === 1 ? 'presente' : 'presentes'}
+              <span class="badge count-badge">${culto.membros} membros</span>
+              <span class="badge count-badge">${culto.visitantes} visitantes</span>
+            </p>
             <button class="btn btn-sm btn-outline-primary" data-cultoid="${culto.id}" data-cultodate="${culto.date}">
               Ver lista completa
             </button>
@@ -200,7 +221,7 @@
         
         modalContent.innerHTML = '';
         
-        for (const [id, valor] of Object.entries(presentesData)) {
+        for (const [id, valor] of Object.entries(presentesData || {})) {
           const item = document.createElement('div');
           item.className = 'list-group-item d-flex justify-content-between align-items-center';
           
@@ -237,7 +258,10 @@
     // Formata a data para exibição
     function formatarData(dataString) {
       const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-      return new Date(dataString).toLocaleDateString('pt-BR', options);
+      const date = new Date(dataString);
+      // Ajusta para o fuso horário local
+      date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+      return date.toLocaleDateString('pt-BR', options);
     }
     
     // Exporta a lista para CSV
@@ -246,7 +270,7 @@
       csvContent += `Lista de Presença - ${formatarData(cultoDate)}\n\n`;
       csvContent += "Nome,Tipo,Função\n";
       
-      for (const [id, valor] of Object.entries(presentesData)) {
+      for (const [id, valor] of Object.entries(presentesData || {})) {
         if (valor === true) {
           // Membro
           const nome = membrosData[id]?.nome || `Membro (ID: ${id})`;
