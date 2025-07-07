@@ -289,49 +289,70 @@
     // Exporta a lista para PDF
 function exportarLista(cultoDate, presentesData, membrosData) {
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
   
-  // Configurações
+  // Cria PDF com compressão ativada
+  const doc = new jsPDF({
+    compress: true // Isso reduz o tamanho sem afetar a visualização
+  });
+
+  // Configurações do documento (mantidas como antes)
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 15;
   const lineHeight = 7;
-  let yPos = 15; // Reduzi um pouco para dar espaço ao logo
-  
-  // Adiciona logo mantendo a proporção original
-  const logoWidth = 50; // Largura desejada para o logo (em pontos)
-  const logoHeight = 30; // Altura será calculada proporcionalmente
-  
-  // Carrega a imagem e calcula proporção (substitua pelo caminho correto do seu logo)
-  const logoImg = new Image();
-  logoImg.src = 'logo.png'; // Ou use um base64 se estiver embutido
-  
-  // Quando a imagem carregar, adiciona ao PDF
-  logoImg.onload = function() {
-    // Calcula a altura proporcional
-    const aspectRatio = logoImg.height / logoImg.width;
-    const proportionalHeight = logoWidth * aspectRatio;
-    
-    // Adiciona a imagem centralizada
-    doc.addImage(logoImg, 'PNG', 
-                (pageWidth - logoWidth) / 2, // Centraliza horizontalmente
-                yPos, 
-                logoWidth, 
-                proportionalHeight);
-    
-    // Ajusta a posição Y após o logo
-    yPos += proportionalHeight + 10;
-    
-    // Continua com o resto do documento
-    completePDF();
+  let yPos = 15;
+
+  // Configurações do logo (mantidas como antes)
+  const logoWidth = 50;
+  const logoHeight = 30;
+
+  // Função para adicionar o logo otimizado
+  const addOptimizedLogo = () => {
+    return new Promise((resolve) => {
+      const logoImg = new Image();
+      
+      logoImg.onload = function() {
+        // Cria canvas temporário para otimizar a imagem
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Define dimensões do canvas igual ao logo
+        canvas.width = this.naturalWidth;
+        canvas.height = this.naturalHeight;
+        
+        // Desenha a imagem no canvas
+        ctx.drawImage(this, 0, 0);
+        
+        // Converte para JPEG com qualidade 80% (reduz drasticamente o tamanho)
+        const optimizedLogo = canvas.toDataURL('image/jpeg', 0.8);
+        
+        // Adiciona ao PDF mantendo as dimensões originais
+        doc.addImage(
+          optimizedLogo,
+          'JPEG',
+          (pageWidth - logoWidth) / 2,
+          yPos,
+          logoWidth,
+          logoHeight
+        );
+        
+        yPos += logoHeight + 10;
+        resolve();
+      };
+      
+      logoImg.onerror = function() {
+        console.warn('Logo não carregado, continuando sem ele');
+        resolve();
+      };
+      
+      logoImg.src = 'logo.png'; // Mantém o caminho original
+    });
   };
-  
-  // Se houver erro ao carregar o logo, continua sem ele
-  logoImg.onerror = function() {
-    console.warn('Logo não carregado, continuando sem ele');
-    completePDF();
-  };
-  
-  function completePDF() {
+
+  // Restante do código (mantido igual)
+  const completePDF = async () => {
+    // Adiciona o logo otimizado
+    await addOptimizedLogo();
+    
     // Título da igreja
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
