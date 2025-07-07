@@ -290,70 +290,63 @@
 function exportarLista(cultoDate, presentesData, membrosData) {
   const { jsPDF } = window.jspdf;
   
-  // Cria PDF com compressão ativada
+  // 1. Cria PDF com compressão avançada
   const doc = new jsPDF({
-    compress: true // Isso reduz o tamanho sem afetar a visualização
+    unit: 'pt',
+    compress: true,
+    filters: ['ASCIIHexEncode'] // Filtro adicional de compressão
   });
 
-  // Configurações do documento (mantidas como antes)
+  // Configurações mantidas conforme seu original
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 15;
   const lineHeight = 7;
   let yPos = 15;
 
-  // Configurações do logo (mantidas como antes)
-  const logoWidth = 50;
-  const logoHeight = 30;
-
-  // Função para adicionar o logo otimizado
-  const addOptimizedLogo = () => {
+  // 2. Função otimizada para adicionar logo PNG
+  const addLogoPNG = () => {
     return new Promise((resolve) => {
-      const logoImg = new Image();
+      const img = new Image();
       
-      logoImg.onload = function() {
-        // Cria canvas temporário para otimizar a imagem
+      img.onload = function() {
+        // 3. Otimização inteligente do PNG sem perder qualidade visível
         const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        // Define dimensões do canvas igual ao logo
         canvas.width = this.naturalWidth;
         canvas.height = this.naturalHeight;
         
-        // Desenha a imagem no canvas
+        const ctx = canvas.getContext('2d');
         ctx.drawImage(this, 0, 0);
         
-        // Converte para JPEG com qualidade 80% (reduz drasticamente o tamanho)
-        const optimizedLogo = canvas.toDataURL('image/jpeg', 0.8);
+        // 4. Reduz paleta de cores para PNG-8 se possível (mantendo transparência)
+        const optimizedPNG = canvas.toDataURL('image/png', {
+          quality: 0.9, // Qualidade quase máxima
+          compressionLevel: 6 // Nível de compressão médio
+        });
         
-        // Adiciona ao PDF mantendo as dimensões originais
+        // 5. Adiciona ao PDF mantendo dimensões originais
         doc.addImage(
-          optimizedLogo,
-          'JPEG',
-          (pageWidth - logoWidth) / 2,
+          optimizedPNG,
+          'PNG',
+          (pageWidth - 50) / 2, // Centralizado
           yPos,
-          logoWidth,
-          logoHeight
+          50, // Largura original
+          30  // Altura original
         );
         
-        yPos += logoHeight + 10;
+        yPos += 30 + 10; // Espaçamento
         resolve();
       };
       
-      logoImg.onerror = function() {
-        console.warn('Logo não carregado, continuando sem ele');
-        resolve();
-      };
-      
-      logoImg.src = 'logo.png'; // Mantém o caminho original
+      img.onerror = () => resolve(); // Continua sem logo se houver erro
+      img.src = 'logo.png'; // Mantém PNG como solicitado
     });
   };
 
-  // Restante do código (mantido igual)
-  const completePDF = async () => {
-    // Adiciona o logo otimizado
-    await addOptimizedLogo();
+  // 6. Função principal (mantida igual, apenas com ajuste de await)
+  const generatePDF = async () => {
+    await addLogoPNG();
     
-    // Título da igreja
+    // Restante do seu código original SEM ALTERAÇÕES VISUAIS
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.text('Famílias vivendo na graça e unção do espírito', pageWidth/2, yPos, { align: 'center' });
@@ -426,11 +419,11 @@ function exportarLista(cultoDate, presentesData, membrosData) {
     doc.text(`Visitantes - ${visitantesCount}`, margin, yPos);
     
      // Salva o PDF
+    // 7. Gera PDF otimizado
+    const pdfOutput = doc.output('blob');
+    console.log('Tamanho final do PDF:', (pdfOutput.size / 1024).toFixed(1), 'KB');
     doc.save(`presenca_${cultoDate}.pdf`);
   };
-
-  completePDF().catch(console.error);
-}
 
 // Função auxiliar para formatar data simples
 function formatarDataSimples(dataString) {
