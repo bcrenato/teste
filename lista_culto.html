@@ -295,50 +295,81 @@ function exportarLista(cultoDate, presentesData, membrosData) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 15;
   const lineHeight = 7;
-  let yPos = 20;
+  let yPos = 15; // Reduzi um pouco para dar espaço ao logo
   
-  // Adiciona logo (substitua logo.png pelo caminho correto da sua imagem)
-  doc.addImage('logo.png', 'PNG', pageWidth/2 - 25, yPos, 50, 50);
-  // yPos += 60;
+  // Adiciona logo mantendo a proporção original
+  const logoWidth = 50; // Largura desejada para o logo (em pontos)
+  const logoHeight = 30; // Altura será calculada proporcionalmente
   
-  // Título da igreja
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Famílias vivendo na graça e unção do espírito', pageWidth/2, yPos, { align: 'center' });
-  yPos += lineHeight * 2;
+  // Carrega a imagem e calcula proporção (substitua pelo caminho correto do seu logo)
+  const logoImg = new Image();
+  logoImg.src = 'logo.png'; // Ou use um base64 se estiver embutido
   
-  // Título do documento
-  doc.setFontSize(16);
-  doc.text('Lista presença culto', pageWidth/2, yPos, { align: 'center' });
-  yPos += lineHeight;
+  // Quando a imagem carregar, adiciona ao PDF
+  logoImg.onload = function() {
+    // Calcula a altura proporcional
+    const aspectRatio = logoImg.height / logoImg.width;
+    const proportionalHeight = logoWidth * aspectRatio;
+    
+    // Adiciona a imagem centralizada
+    doc.addImage(logoImg, 'PNG', 
+                (pageWidth - logoWidth) / 2, // Centraliza horizontalmente
+                yPos, 
+                logoWidth, 
+                proportionalHeight);
+    
+    // Ajusta a posição Y após o logo
+    yPos += proportionalHeight + 10;
+    
+    // Continua com o resto do documento
+    completePDF();
+  };
   
-  // Data formatada
-  doc.setFontSize(12);
-  doc.text(formatarDataSimples(cultoDate), pageWidth/2, yPos, { align: 'center' });
-  yPos += lineHeight * 2;
+  // Se houver erro ao carregar o logo, continua sem ele
+  logoImg.onerror = function() {
+    console.warn('Logo não carregado, continuando sem ele');
+    completePDF();
+  };
   
-  // Cabeçalho da tabela
-  const headers = [['Nome', 'Função']];
-  const rows = [];
-  
-  // Contadores
-  let membrosCount = 0;
-  let visitantesCount = 0;
-  
-  // Preenche os dados
-  for (const [id, valor] of Object.entries(presentesData || {})) {
-    if (valor === true) {
-      // Membro
-      const nome = membrosData[id]?.nome || `Membro (ID: ${id})`;
-      const funcao = membrosData[id]?.funcao || 'Membro';
-      rows.push([nome, funcao]);
-      membrosCount++;
-    } else {
-      // Visitante
-      rows.push([valor, 'Visitante']);
-      visitantesCount++;
+  function completePDF() {
+    // Título da igreja
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Famílias vivendo na graça e unção do espírito', pageWidth/2, yPos, { align: 'center' });
+    yPos += lineHeight * 2;
+    
+    // Título do documento
+    doc.setFontSize(16);
+    doc.text('Lista presença culto', pageWidth/2, yPos, { align: 'center' });
+    yPos += lineHeight;
+    
+    // Data formatada
+    doc.setFontSize(12);
+    doc.text(formatarDataSimples(cultoDate), pageWidth/2, yPos, { align: 'center' });
+    yPos += lineHeight * 2;
+    
+    // Cabeçalho da tabela
+    const headers = [['Nome', 'Função']];
+    const rows = [];
+    
+    // Contadores
+    let membrosCount = 0;
+    let visitantesCount = 0;
+    
+    // Preenche os dados
+    for (const [id, valor] of Object.entries(presentesData || {})) {
+      if (valor === true) {
+        // Membro
+        const nome = membrosData[id]?.nome || `Membro (ID: ${id})`;
+        const funcao = membrosData[id]?.funcao || 'Membro';
+        rows.push([nome, funcao]);
+        membrosCount++;
+      } else {
+        // Visitante
+        rows.push([valor, 'Visitante']);
+        visitantesCount++;
+      }
     }
-  }
   
   // Adiciona a tabela
   doc.autoTable({
