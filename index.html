@@ -299,15 +299,44 @@ tabelaMeses.innerHTML += `
 
 <script>
   // Configurações do PIX
-  const chavePIX = "14039230000179"; // 🔹 Altere para sua chave PIX
-  const nome = "Igreja Crista Nova Esperanca";          // 🔹 Nome que aparecerá no PIX
-  const cidade = "Nilopolis - RJ";           // 🔹 Cidade e estado
-  const valor = "70.00";                  // 🔹 Valor fixo (opcional)
+  const chavePIX = "14039230000179"; // CNPJ sem pontuação
+  const nome = "Igreja Crista Nova Esperanca";
+  const cidade = "Nilopolis"; // Apenas cidade (sem estado)
+  const valor = "70.00";
 
-  // Gera código PIX no padrão BR Code (estático)
+  // Função para calcular CRC16 (obrigatório para PIX)
+  function calculateCRC16(payload) {
+    let crc = 0xFFFF;
+    for (let i = 0; i < payload.length; i++) {
+      crc ^= payload.charCodeAt(i) << 8;
+      for (let j = 0; j < 8; j++) {
+        crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
+      }
+    }
+    return crc & 0xFFFF;
+  }
+
+  // Gera código PIX corretamente formatado
   function gerarCodigoPIX() {
-    document.getElementById("qrcode").innerHTML = ""; // Limpa QRCode anterior
-    const payload = `00020126330014BR.GOV.BCB.PIX0114${chavePIX}520400005303986540${valor}5802BR5913${nome}6009${cidade}62070503***6304`;
+    document.getElementById("qrcode").innerHTML = "";
+    
+    // Monta o payload sem o CRC no final
+    let payload = `000201` + // Payload Format Indicator
+                  `26` + // Merchant Account Information (tamanho do bloco)
+                  `0014br.gov.bcb.pix` + // GUI do PIX
+                  `01${chavePIX.length.toString().padStart(2, '0')}${chavePIX}` + // Chave PIX
+                  `52040000` + // Merchant Category Code
+                  `5303986` + // Moeda (Real)
+                  `54${valor.length.toString().padStart(2, '0')}${valor}` + // Valor
+                  `5802BR` + // País
+                  `59${nome.length.toString().padStart(2, '0')}${nome}` + // Nome do beneficiário
+                  `60${cidade.length.toString().padStart(2, '0')}${cidade}` + // Cidade
+                  `62070503***`; // Additional Data Field
+    
+    // Calcula e adiciona o CRC16
+    const crc = calculateCRC16(payload + '6304');
+    payload += `6304${crc.toString(16).toUpperCase().padStart(4, '0')}`;
+    
     new QRCode(document.getElementById("qrcode"), {
       text: payload,
       width: 200,
@@ -315,14 +344,12 @@ tabelaMeses.innerHTML += `
     });
   }
 
-  // Copia chave PIX para área de transferência
   function copiarChave() {
     navigator.clipboard.writeText(chavePIX).then(() => {
       alert("✅ Chave PIX copiada!");
     });
   }
 
-  // Gera QR code ao abrir modal
   document.getElementById('pixModal').addEventListener('show.bs.modal', gerarCodigoPIX);
 </script>
   
