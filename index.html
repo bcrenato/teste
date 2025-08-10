@@ -298,13 +298,14 @@ tabelaMeses.innerHTML += `
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <script>
-  // Configurações PIX (ajuste esses valores)
+  // DADOS PIX
   const chavePIX = "14039230000179"; // CNPJ sem pontuação
-  const nomeBeneficiario = "Igreja Crista Nova Esperanca"; // Máx 25 caracteres
-  const cidade = "NILOPOLIS"; // Apenas nome da cidade, sem estado (maiúsculas, sem acentos)
-  const valorPix = "70.00"; // Valor com 2 decimais
+  const nomeBeneficiario = "Igreja Crista Nova Esperanca";
+  const cidade = "NILOPOLIS"; // Sem estado, maiúsculas
+  const valor = "70.00";
+  const referencia = "Valente de Davi"; // 🔹 Campo de referência
 
-  // Função para calcular CRC16 (obrigatório para PIX)
+  // Função para calcular CRC16
   function calcularCRC16(payload) {
     let crc = 0xFFFF;
     for (let i = 0; i < payload.length; i++) {
@@ -320,41 +321,45 @@ tabelaMeses.innerHTML += `
     const qrcodeDiv = document.getElementById("qrcode");
     qrcodeDiv.innerHTML = "";
     
-    // 1. Montagem do payload principal (sem CRC)
+    // Monta o payload
     let payload = 
-      "000201" + // Payload Format Indicator
-      "26" + // Merchant Account Information (tamanho do bloco)
-      "0014br.gov.bcb.pix" + // GUI PIX
-      "01" + chavePIX.length.toString().padStart(2, '0') + chavePIX + // Chave PIX
-      "52040000" + // Merchant Category Code
-      "5303986" + // Moeda (986 = BRL)
-      "54" + valorPix.length.toString().padStart(2, '0') + valorPix + // Valor
-      "5802BR" + // País
-      "59" + nomeBeneficiario.length.toString().padStart(2, '0') + nomeBeneficiario + // Nome
-      "60" + cidade.length.toString().padStart(2, '0') + cidade + // Cidade
-      "62070503***"; // Adicional Data Field
+      "000201" +
+      "26" +
+      "0014BR.GOV.BCB.PIX" +
+      "0114" + chavePIX +
+      "52040000" +
+      "5303986" +
+      "54" + valor.length.toString().padStart(2, '0') + valor +
+      "5802BR" +
+      "59" + nomeBeneficiario.length.toString().padStart(2, '0') + nomeBeneficiario +
+      "60" + cidade.length.toString().padStart(2, '0') + cidade +
+      "62" + // Início do Additional Data Field
+      "05" + // Tamanho do bloco de referência
+      "02" + referencia.length.toString().padStart(2, '0') + referencia; // ID 05 = Referência
 
-    // 2. Calcula e adiciona CRC16
+    // Calcula CRC16
     const crc = calcularCRC16(payload + "6304");
     payload += "6304" + crc.toString(16).toUpperCase().padStart(4, '0');
 
-    // 3. Gera QR Code
+    // Gera QR Code
     new QRCode(qrcodeDiv, {
       text: payload,
-      width: 256,
-      height: 256,
+      width: 260,
+      height: 260,
       correctLevel: QRCode.CorrectLevel.H
     });
+
+    console.log("Payload gerado:", payload); // Para debug
   }
 
-  // Copiar chave PIX
+  // COPIA A CHAVE PIX (MANTIVE SEU CÓDIGO ORIGINAL)
   function copiarChave() {
     navigator.clipboard.writeText(chavePIX)
-      .then(() => alert("Chave PIX copiada! ✅"))
-      .catch(() => alert("Falha ao copiar. ⚠️"));
+      .then(() => alert("Chave PIX copiada com sucesso! ✅"))
+      .catch(() => alert("Erro ao copiar chave ⚠️"));
   }
 
-  // Gera ao abrir o modal
+  // EXECUTA QUANDO ABRIR O MODAL
   document.getElementById('pixModal')?.addEventListener('show.bs.modal', gerarCodigoPIX);
 </script>
   
