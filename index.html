@@ -298,28 +298,116 @@ tabelaMeses.innerHTML += `
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <script>
-  // Use ESTE payload que já foi validado e funciona
-  const payloadFuncionando = "00020126360014BR.GOV.BCB.PIX011414039230000179520400005303986540570.005802BR5905MIINE6009Nilopolis62150511ValenteDavi63040410";
+  // =============================================
+  // 🔧 CONFIGURAÇÕES (ALTERE AQUI PARA ATUALIZAR)
+  // =============================================
+  const configPIX = {
+    chave: "14039230000179",          // CNPJ sem pontuação
+    beneficiario: "MIINE",            // Nome curto (até 25 chars)
+    cidade: "Nilopolis",              // Sem estado
+    valor: "70.00",                   // Formato: "XX.XX"
+    referencia: "ValenteDavi",        // Opcional
+    txid: "***"                       // Identificador (opcional)
+  };
 
-  function gerarCodigoPIX() {
-    document.getElementById("qrcode").innerHTML = "";
-    new QRCode(document.getElementById("qrcode"), {
-      text: payloadFuncionando,
-      width: 200,
-      height: 200,
-      correctLevel: QRCode.CorrectLevel.H // Melhor correção de erro
-    });
+  // =============================================
+  // 🛠️ FUNÇÕES INTERNAS (NÃO ALTERE)
+  // =============================================
+  /* Calcula o CRC16 (obrigatório para PIX) */
+  function calcularCRC16(data) {
+    let crc = 0xFFFF;
+    for (let i = 0; i < data.length; i++) {
+      crc ^= data.charCodeAt(i) << 8;
+      for (let j = 0; j < 8; j++) {
+        crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : (crc << 1);
+      }
+    }
+    return crc & 0xFFFF;
   }
 
-  // Mantenha sua função de copiar chave
+  /* Monta o payload BR Code */
+  function gerarPayload() {
+    // Blocos fixos (não alterar)
+    const GUI_PIX = "BR.GOV.BCB.PIX";
+    const MERCHANT_CATEGORY = "0000";
+    const MOEDA = "986"; // BRL
+    const PAIS = "BR";
+
+    // Calcula tamanhos dinamicamente
+    const tamanhos = {
+      gui: String(GUI_PIX.length).padStart(2, '0'),
+      chave: String(configPIX.chave.length).padStart(2, '0'),
+      nome: String(configPIX.beneficiario.length).padStart(2, '0'),
+      cidade: String(configPIX.cidade.length).padStart(2, '0'),
+      valor: String(configPIX.valor.length).padStart(2, '0'),
+      ref: String(configPIX.referencia.length).padStart(2, '0')
+    };
+
+    // Constrói o payload parte por parte
+    let payload = 
+      "000201" + // Início do payload
+      "26" + // Merchant Account Information
+      `0014${GUI_PIX}` + // GUI do PIX
+      `01${tamanhos.chave}${configPIX.chave}` + // Chave PIX
+      `52${MERCHANT_CATEGORY}` + // Merchant Category Code
+      `53${MOEDA}` + // Código da moeda
+      `54${tamanhos.valor}${configPIX.valor}` + // Valor
+      `58${PAIS.length}${PAIS}` + // País
+      `59${tamanhos.nome}${configPIX.beneficiario}` + // Beneficiário
+      `60${tamanhos.cidade}${configPIX.cidade}` + // Cidade
+      `62${ // Additional Data Field
+        15 // Tamanho total do bloco adicional
+      }05${tamanhos.ref}${configPIX.referencia}` + // Referência (ID 05)
+      `6304`; // Prefixo do CRC
+
+    // Adiciona CRC16 ao final
+    const crc = calcularCRC16(payload);
+    return payload + crc.toString(16).toUpperCase().padStart(4, '0');
+  }
+
+  // =============================================
+  // 🖥️ INTERFACE (GERAÇÃO DO QR CODE)
+  // =============================================
+  function gerarQRCode() {
+    try {
+      const payload = gerarPayload();
+      document.getElementById("qrcode").innerHTML = "";
+      
+      new QRCode(document.getElementById("qrcode"), {
+        text: payload,
+        width: 260,
+        height: 260,
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      console.debug("Payload gerado:", payload); // Para testes
+    } catch (error) {
+      console.error("Erro ao gerar PIX:", error);
+      alert("Erro ao gerar QR Code. Verifique o console.");
+    }
+  }
+
+  // =============================================
+  // 📋 COPIA DA CHAVE PIX
+  // =============================================
   function copiarChave() {
-    navigator.clipboard.writeText("14039230000179").then(() => {
-      alert("✅ Chave PIX copiada!");
-    });
+    navigator.clipboard.writeText(configPIX.chave)
+      .then(() => alert("Chave PIX copiada! ✅"))
+      .catch(() => alert("Erro ao copiar. Permita acesso ao clipboard."));
   }
 
-  // Gera QR code ao abrir modal
-  document.getElementById('pixModal').addEventListener('show.bs.modal', gerarCodigoPIX);
+  // =============================================
+  // ⚡ INICIALIZAÇÃO
+  // =============================================
+  document.addEventListener('DOMContentLoaded', () => {
+    // Gera ao abrir o modal (se existir)
+    document.getElementById('pixModal')?.addEventListener('show.bs.modal', gerarQRCode);
+    
+    // Opcional: Gera imediatamente se o elemento existir
+    if (document.getElementById("qrcode")) {
+      gerarQRCode();
+    }
+  });
 </script>
   
 </body>
