@@ -313,38 +313,91 @@ tabelaMeses.innerHTML += `
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <script>
-  // Use ESTE payload que já foi validado e funciona
-  const payloadFuncionando = "00020126360014BR.GOV.BCB.PIX011414039230000179520400005303986540570.005802BR5924Igreja C. Nova Esperanca6009Nilopolis62150511ValenteDavi6304CBC4";
+  // --- DADOS DO PIX ---
+  const chavePIX = "14039230000179";         // Chave PIX (CPF, CNPJ, email ou telefone)
+  const nomeRecebedor = "Igreja C. Nova Esperanca";
+  const cidadeRecebedor = "Nilopolis";
+  const valorPIX = "70.00";                  // Pode deixar "" para valor aberto
+  const idTransacao = "ValenteDavi";         // Até 25 caracteres
 
+  // --- FUNÇÃO PARA GERAR O PAYLOAD PIX ---
+  function gerarPayloadPIX() {
+    const nomeRecebedorFormat = nomeRecebedor.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const cidadeRecebedorFormat = cidadeRecebedor.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+    // Montagem padrão EMV (sem CRC ainda)
+    let payload =
+      "000201" + // Início fixo
+      "26" + formatSize("BR.GOV.BCB.PIX" + formatField("01", chavePIX)) +
+      "52040000" +
+      "5303986" +
+      (valorPIX ? "54" + formatSize(valorPIX) + valorPIX : "") +
+      "5802BR" +
+      formatField("59", nomeRecebedorFormat) +
+      formatField("60", cidadeRecebedorFormat) +
+      formatField("62", formatField("05", idTransacao)) +
+      "6304"; // Campo CRC
+
+    // Adiciona o CRC calculado
+    payload += calcularCRC16(payload);
+    return payload;
+  }
+
+  // --- Funções auxiliares ---
+  function formatField(id, value) {
+    return id + formatSize(value) + value;
+  }
+
+  function formatSize(value) {
+    return ("00" + value.length).slice(-2);
+  }
+
+  function calcularCRC16(payload) {
+    let polinomio = 0x1021;
+    let resultado = 0xFFFF;
+
+    for (let i = 0; i < payload.length; i++) {
+      resultado ^= (payload.charCodeAt(i) << 8);
+      for (let j = 0; j < 8; j++) {
+        if ((resultado & 0x8000) !== 0) {
+          resultado = (resultado << 1) ^ polinomio;
+        } else {
+          resultado <<= 1;
+        }
+        resultado &= 0xFFFF;
+      }
+    }
+    return resultado.toString(16).toUpperCase().padStart(4, "0");
+  }
+
+  // --- GERA QR CODE ---
   function gerarCodigoPIX() {
     document.getElementById("qrcode").innerHTML = "";
     new QRCode(document.getElementById("qrcode"), {
-      text: payloadFuncionando,
+      text: gerarPayloadPIX(),
       width: 200,
       height: 200,
-      correctLevel: QRCode.CorrectLevel.H // Melhor correção de erro
+      correctLevel: QRCode.CorrectLevel.H
     });
   }
 
-  // Mantenha sua função de copiar chave
+  // --- COPIAR CHAVE PIX ---
   function copiarChave() {
-    navigator.clipboard.writeText("14039230000179").then(() => {
-      alert("✅ Chave PIX copiada!");
-    });
+    navigator.clipboard.writeText(chavePIX)
+      .then(() => alert("✅ Chave PIX copiada!"));
   }
 
+  // --- COPIAR PAYLOAD PIX COMPLETO ---
+  function copiarCodigoPIX() {
+    navigator.clipboard.writeText(gerarPayloadPIX())
+      .then(() => alert("✅ Código PIX copiado!"))
+      .catch(() => alert("⚠️ Falha ao copiar."));
+  }
 
-// Função para copiar o código PIX completo
-function copiarCodigoPIX() {
-  navigator.clipboard.writeText(payloadFuncionando)
-    .then(() => alert("✅ Código PIX copiado! Você pode colar em qualquer app bancário."))
-    .catch(() => alert("⚠️ Falha ao copiar. Permita acesso à área de transferência."));
-}
-  
-
-  // Gera QR code ao abrir modal
+  // --- GERAR QUANDO MODAL ABRIR ---
   document.getElementById('pixModal').addEventListener('show.bs.modal', gerarCodigoPIX);
 </script>
+
   
 </body>
 </html>
