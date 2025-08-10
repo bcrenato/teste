@@ -298,108 +298,28 @@ tabelaMeses.innerHTML += `
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <script>
-  // ================= CONFIGURAÇÕES =================
-  const configPIX = {
-    chave: "14039230000179",       // CNPJ sem pontuação
-    beneficiario: "MIINE",         // Nome curto (como no banco)
-    cidade: "Nilopolis",           // Sem estado
-    valor: "70.00",                // Formato "XX.XX"
-    referencia: "ValenteDavi"      // Opcional
-  };
+  // Use ESTE payload que já foi validado e funciona
+  const payloadFuncionando = "00020126360014BR.GOV.BCB.PIX011414039230000179520400005303986540570.005802BR5905MIINE6009Nilopolis62150511ValenteDavi63040410";
 
-  // ============== FUNÇÃO CRC16 (CORRIGIDA) ==============
-  function calcularCRC16(data) {
-    let crc = 0xFFFF;
-    for (let i = 0; i < data.length; i++) {
-      crc ^= data.charCodeAt(i) << 8;
-      for (let j = 0; j < 8; j++) {
-        crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : (crc << 1);
-      }
-    }
-    return crc & 0xFFFF;
+  function gerarCodigoPIX() {
+    document.getElementById("qrcode").innerHTML = "";
+    new QRCode(document.getElementById("qrcode"), {
+      text: payloadFuncionando,
+      width: 200,
+      height: 200,
+      correctLevel: QRCode.CorrectLevel.H // Melhor correção de erro
+    });
   }
 
-  // ============== GERADOR DE PAYLOAD (CORRIGIDO) ==============
-  function gerarPayload() {
-    // Blocos fixos
-    const GUI_PIX = "BR.GOV.BCB.PIX";
-    const MOEDA = "986"; // BRL
-    
-    // Calcula tamanhos
-    const tamanhos = {
-      gui: GUI_PIX.length.toString().padStart(2, '0'),
-      chave: configPIX.chave.length.toString().padStart(2, '0'),
-      nome: configPIX.beneficiario.length.toString().padStart(2, '0'),
-      cidade: configPIX.cidade.length.toString().padStart(2, '0'),
-      valor: configPIX.valor.length.toString().padStart(2, '0'),
-      ref: configPIX.referencia.length.toString().padStart(2, '0')
-    };
-
-    // Bloco da Referência (corrigido)
-    const blocoReferencia = 
-      "05" + // ID do campo de referência
-      tamanhos.ref + 
-      configPIX.referencia;
-
-    const tamanhoBlocoAdicional = blocoReferencia.length.toString().padStart(2, '0');
-
-    // Constrói o payload passo a passo
-    let payload = 
-      "000201" + // Payload Format Indicator
-      "26" + // Merchant Account Information
-      `0014${GUI_PIX}` + // GUI PIX
-      `01${tamanhos.chave}${configPIX.chave}` + // Chave PIX
-      "52040000" + // Merchant Category Code
-      `53${MOEDA}` + // Moeda
-      `54${tamanhos.valor}${configPIX.valor}` + // Valor
-      "5802BR" + // País
-      `59${tamanhos.nome}${configPIX.beneficiario}` + // Beneficiário
-      `60${tamanhos.cidade}${configPIX.cidade}` + // Cidade
-      `62${tamanhoBlocoAdicional}${blocoReferencia}` + // Additional Data Field (corrigido)
-      "6304"; // CRC16 Prefix
-
-    // Adiciona CRC16
-    const crc = calcularCRC16(payload);
-    return payload + crc.toString(16).toUpperCase().padStart(4, '0');
-  }
-
-  // ============== GERADOR DE QR CODE ==============
-  function gerarQRCode() {
-    try {
-      const payload = gerarPayload();
-      document.getElementById("qrcode").innerHTML = "";
-      
-      new QRCode(document.getElementById("qrcode"), {
-        text: payload,
-        width: 260,
-        height: 260,
-        correctLevel: QRCode.CorrectLevel.H
-      });
-
-      console.log("Payload válido gerado:", payload);
-    } catch (error) {
-      console.error("Erro:", error);
-      alert("Erro ao gerar PIX. Verifique o console.");
-    }
-  }
-
-  // ============== INICIALIZAÇÃO ==============
-  document.addEventListener('DOMContentLoaded', () => {
-    // Gera automaticamente se o elemento existir
-    if (document.getElementById("qrcode")) {
-      gerarQRCode();
-    }
-    
-    // Configura o modal (se existir)
-    document.getElementById('pixModal')?.addEventListener('show.bs.modal', gerarQRCode);
-  });
-
-  // Função para copiar chave (opcional)
+  // Mantenha sua função de copiar chave
   function copiarChave() {
-    navigator.clipboard.writeText(configPIX.chave)
-      .then(() => alert("Chave copiada! ✅"))
-      .catch(() => alert("Erro ao copiar"));
+    navigator.clipboard.writeText("14039230000179").then(() => {
+      alert("✅ Chave PIX copiada!");
+    });
   }
+
+  // Gera QR code ao abrir modal
+  document.getElementById('pixModal').addEventListener('show.bs.modal', gerarCodigoPIX);
 </script>
   
 </body>
