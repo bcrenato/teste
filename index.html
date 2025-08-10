@@ -298,59 +298,64 @@ tabelaMeses.innerHTML += `
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <script>
-  // Configurações do PIX
-  const chavePIX = "bcrenato@gmail.com"; // CNPJ sem pontuação
-  const nome = "Igreja Crista Nova Esperanca";
-  const cidade = "Nilopolis"; // Apenas cidade (sem estado)
-  const valor = "70.00";
+  // Configurações PIX (ajuste esses valores)
+  const chavePIX = "14039230000179"; // CNPJ sem pontuação
+  const nomeBeneficiario = "Igreja Crista Nova Esperanca"; // Máx 25 caracteres
+  const cidade = "NILOPOLIS"; // Apenas nome da cidade, sem estado (maiúsculas, sem acentos)
+  const valorPix = "70.00"; // Valor com 2 decimais
 
   // Função para calcular CRC16 (obrigatório para PIX)
-  function calculateCRC16(payload) {
+  function calcularCRC16(payload) {
     let crc = 0xFFFF;
     for (let i = 0; i < payload.length; i++) {
       crc ^= payload.charCodeAt(i) << 8;
       for (let j = 0; j < 8; j++) {
-        crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
+        crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : (crc << 1);
       }
     }
     return crc & 0xFFFF;
   }
 
-  // Gera código PIX corretamente formatado
   function gerarCodigoPIX() {
-    document.getElementById("qrcode").innerHTML = "";
+    const qrcodeDiv = document.getElementById("qrcode");
+    qrcodeDiv.innerHTML = "";
     
-    // Monta o payload sem o CRC no final
-    let payload = `000201` + // Payload Format Indicator
-                  `26` + // Merchant Account Information (tamanho do bloco)
-                  `0014br.gov.bcb.pix` + // GUI do PIX
-                  `01${chavePIX.length.toString().padStart(2, '0')}${chavePIX}` + // Chave PIX
-                  `52040000` + // Merchant Category Code
-                  `5303986` + // Moeda (Real)
-                  `54${valor.length.toString().padStart(2, '0')}${valor}` + // Valor
-                  `5802BR` + // País
-                  `59${nome.length.toString().padStart(2, '0')}${nome}` + // Nome do beneficiário
-                  `60${cidade.length.toString().padStart(2, '0')}${cidade}` + // Cidade
-                  `62070503***`; // Additional Data Field
-    
-    // Calcula e adiciona o CRC16
-    const crc = calculateCRC16(payload + '6304');
-    payload += `6304${crc.toString(16).toUpperCase().padStart(4, '0')}`;
-    
-    new QRCode(document.getElementById("qrcode"), {
+    // 1. Montagem do payload principal (sem CRC)
+    let payload = 
+      "000201" + // Payload Format Indicator
+      "26" + // Merchant Account Information (tamanho do bloco)
+      "0014br.gov.bcb.pix" + // GUI PIX
+      "01" + chavePIX.length.toString().padStart(2, '0') + chavePIX + // Chave PIX
+      "52040000" + // Merchant Category Code
+      "5303986" + // Moeda (986 = BRL)
+      "54" + valorPix.length.toString().padStart(2, '0') + valorPix + // Valor
+      "5802BR" + // País
+      "59" + nomeBeneficiario.length.toString().padStart(2, '0') + nomeBeneficiario + // Nome
+      "60" + cidade.length.toString().padStart(2, '0') + cidade + // Cidade
+      "62070503***"; // Adicional Data Field
+
+    // 2. Calcula e adiciona CRC16
+    const crc = calcularCRC16(payload + "6304");
+    payload += "6304" + crc.toString(16).toUpperCase().padStart(4, '0');
+
+    // 3. Gera QR Code
+    new QRCode(qrcodeDiv, {
       text: payload,
-      width: 200,
-      height: 200
+      width: 256,
+      height: 256,
+      correctLevel: QRCode.CorrectLevel.H
     });
   }
 
+  // Copiar chave PIX
   function copiarChave() {
-    navigator.clipboard.writeText(chavePIX).then(() => {
-      alert("✅ Chave PIX copiada!");
-    });
+    navigator.clipboard.writeText(chavePIX)
+      .then(() => alert("Chave PIX copiada! ✅"))
+      .catch(() => alert("Falha ao copiar. ⚠️"));
   }
 
-  document.getElementById('pixModal').addEventListener('show.bs.modal', gerarCodigoPIX);
+  // Gera ao abrir o modal
+  document.getElementById('pixModal')?.addEventListener('show.bs.modal', gerarCodigoPIX);
 </script>
   
 </body>
