@@ -286,7 +286,7 @@ tabelaMeses.innerHTML += `
     <div class="modal-content p-3 text-center">
       <h4 class="mb-3">Pagamento via PIX</h4>
       <div id="qrcode" class="mb-3"></div>
-      <p><strong>Chave PIX:</strong> <span id="pixChave">seuemail@exemplo.com</span></p>
+      <p><strong>Chave PIX:</strong> <span id="pixChave">14.039.230/0001-79</span></p>
       <button class="btn btn-outline-primary" onclick="copiarChave()">📋 Copiar chave</button>
       <p class="mt-3 text-muted">Após o pagamento, envie o comprovante para confirmar.</p>
     </div>
@@ -299,10 +299,10 @@ tabelaMeses.innerHTML += `
 
 <script>
   // Configurações do PIX
-  const chavePIX = "14039230000179"; // 🔹 Altere para sua chave PIX
+  const chavePIX = "14.039.230/0001-79"; // 🔹 Altere para sua chave PIX
   const nome = "Ministerio Internacional Nova Esperança";          // 🔹 Nome que aparecerá no PIX
   const cidade = "Nilópolis - RJ";           // 🔹 Cidade e estado
-  const valor = "70.00";                  // 🔹 Valor fixo (opcional)
+  const valor = "70,00";                  // 🔹 Valor fixo (opcional)
 
   // Gera código PIX no padrão BR Code (estático)
   function gerarCodigoPIX() {
