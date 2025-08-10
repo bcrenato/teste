@@ -283,18 +283,30 @@ tabelaMeses.innerHTML += `
 <!-- Modal do PIX -->
 <div class="modal fade" id="pixModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content p-3 text-center">
-      <h4 class="mb-3">Pagamento via PIX</h4>
-      <div id="qrcode" class="mb-3"></div>
-      <p><strong>Chave PIX:</strong> <span id="pixChave">14.039.230/0001-79</span></p>
-      <button class="btn btn-outline-primary" onclick="copiarChave()">📋 Copiar chave</button>
-     
-      <button class="btn btn-outline-secondary mt-2" onclick="copiarCodigoPIX()">📋 Copiar código PIX</button>
-      
-      <p class="mt-3 text-muted">Após o pagamento, envie o comprovante para confirmar.</p>
+    <div class="modal-content p-3">
+      <div class="text-center"> <!-- Div para centralizar todo o conteúdo -->
+        <h4 class="mb-3">Pagamento via PIX</h4>
+        
+        <!-- Container do QR Code com margem automática para centralizar -->
+        <div id="qrcode" class="mx-auto" style="width: fit-content;"></div>
+        
+        <p class="mt-3"><strong>Chave PIX:</strong> <span>14.039.230/0001-79</span></p>
+        
+        <div class="d-flex flex-column align-items-center"> <!-- Centraliza os botões -->
+          <button class="btn btn-outline-primary" onclick="copiarChave()">
+            📋 Copiar chave PIX
+          </button>
+          
+          <button class="btn btn-outline-secondary mt-2" onclick="copiarCodigoPIX()">
+            📋 Copiar código PIX completo
+          </button>
+        </div>
+        
+        <p class="mt-3 text-muted small">Após o pagamento, envie o comprovante para confirmar.</p>
+      </div>
     </div>
   </div>
-</div> 
+</div>
 
 
   <!-- QRCode.js -->
