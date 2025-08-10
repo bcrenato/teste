@@ -288,6 +288,9 @@ tabelaMeses.innerHTML += `
       <div id="qrcode" class="mb-3"></div>
       <p><strong>Chave PIX:</strong> <span id="pixChave">14.039.230/0001-79</span></p>
       <button class="btn btn-outline-primary" onclick="copiarChave()">📋 Copiar chave</button>
+     
+      <button class="btn btn-outline-secondary mt-2" onclick="copiarCodigoPIX()">📋 Copiar código PIX</button>
+      
       <p class="mt-3 text-muted">Após o pagamento, envie o comprovante para confirmar.</p>
     </div>
   </div>
@@ -317,6 +320,15 @@ tabelaMeses.innerHTML += `
       alert("✅ Chave PIX copiada!");
     });
   }
+
+
+// Função para copiar o código PIX completo
+function copiarCodigoPIX() {
+  navigator.clipboard.writeText(payloadFuncionando)
+    .then(() => alert("✅ Código PIX copiado! Você pode colar em qualquer app bancário."))
+    .catch(() => alert("⚠️ Falha ao copiar. Permita acesso à área de transferência."));
+}
+  
 
   // Gera QR code ao abrir modal
   document.getElementById('pixModal').addEventListener('show.bs.modal', gerarCodigoPIX);
