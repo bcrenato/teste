@@ -320,23 +320,28 @@ tabelaMeses.innerHTML += `
   const valorPIX = "70.00";                  // Pode deixar "" para valor aberto
   const idTransacao = "ValenteDavi";         // Até 25 caracteres
 
-  // --- FUNÇÃO PARA GERAR O PAYLOAD PIX ---
+  // --- FUNÇÃO PARA GERAR PAYLOAD PIX ---
   function gerarPayloadPIX() {
-    const nomeRecebedorFormat = nomeRecebedor.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const cidadeRecebedorFormat = cidadeRecebedor.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const nomeFormat = removerAcentos(nomeRecebedor);
+    const cidadeFormat = removerAcentos(cidadeRecebedor);
 
-    // Montagem padrão EMV (sem CRC ainda)
+    // Merchant Account Information (campo 26)
+    const merchantAccountInfo =
+      formatField("00", "BR.GOV.BCB.PIX") +
+      formatField("01", chavePIX);
+
+    // Montagem sem CRC ainda
     let payload =
-      "000201" + // Início fixo
-      "26" + formatSize("BR.GOV.BCB.PIX" + formatField("01", chavePIX)) +
-      "52040000" +
-      "5303986" +
+      "000201" + // Payload Format Indicator
+      "26" + formatSize(merchantAccountInfo) + merchantAccountInfo +
+      "52040000" + // Merchant Category Code
+      "5303986" +  // Currency (BRL)
       (valorPIX ? "54" + formatSize(valorPIX) + valorPIX : "") +
-      "5802BR" +
-      formatField("59", nomeRecebedorFormat) +
-      formatField("60", cidadeRecebedorFormat) +
+      "5802BR" +   // País
+      formatField("59", nomeFormat) +
+      formatField("60", cidadeFormat) +
       formatField("62", formatField("05", idTransacao)) +
-      "6304"; // Campo CRC
+      "6304"; // CRC placeholder
 
     // Adiciona o CRC calculado
     payload += calcularCRC16(payload);
@@ -350,6 +355,10 @@ tabelaMeses.innerHTML += `
 
   function formatSize(value) {
     return ("00" + value.length).slice(-2);
+  }
+
+  function removerAcentos(texto) {
+    return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   }
 
   function calcularCRC16(payload) {
@@ -370,7 +379,7 @@ tabelaMeses.innerHTML += `
     return resultado.toString(16).toUpperCase().padStart(4, "0");
   }
 
-  // --- GERA QR CODE ---
+  // --- Gera QR Code ---
   function gerarCodigoPIX() {
     document.getElementById("qrcode").innerHTML = "";
     new QRCode(document.getElementById("qrcode"), {
@@ -381,22 +390,24 @@ tabelaMeses.innerHTML += `
     });
   }
 
-  // --- COPIAR CHAVE PIX ---
+  // --- Copiar apenas chave PIX ---
   function copiarChave() {
     navigator.clipboard.writeText(chavePIX)
-      .then(() => alert("✅ Chave PIX copiada!"));
+      .then(() => alert("✅ Chave PIX copiada!"))
+      .catch(() => alert("⚠️ Falha ao copiar a chave PIX."));
   }
 
-  // --- COPIAR PAYLOAD PIX COMPLETO ---
+  // --- Copiar código PIX completo ---
   function copiarCodigoPIX() {
     navigator.clipboard.writeText(gerarPayloadPIX())
       .then(() => alert("✅ Código PIX copiado!"))
-      .catch(() => alert("⚠️ Falha ao copiar."));
+      .catch(() => alert("⚠️ Falha ao copiar o código PIX."));
   }
 
-  // --- GERAR QUANDO MODAL ABRIR ---
+  // --- Evento para gerar quando abrir modal ---
   document.getElementById('pixModal').addEventListener('show.bs.modal', gerarCodigoPIX);
 </script>
+
 
   
 </body>
