@@ -2,413 +2,126 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Transparência - Contribuições</title>
+  <title>Minha Contribuição - Sistema de Arrecadação</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 </head>
 <body class="bg-light">
 
-  <div class="container py-4">
-    <h2 class="mb-4 text-center">📊 Transparência - Valentes de Davi</h2>
-
-   
-    <!-- Botão de pagamento PIX -->
-<div class="text-center my-4">
-  <button class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#pixModal">
-    💳 Pagar com PIX
-  </button>
-</div>
-    
-    
-    <!-- Card resumo -->
-    <div class="card shadow p-3 mb-4">
-      <h5 class="mb-2 text-center">
-        Pagantes este mês: <span id="quantPagantes" class="fw-bold text-success"></span>
-      </h5>
-      <h6 class="text-center">
-        Total arrecadado até agora: <span id="valorArrecadado" class="fw-bold text-primary"></span>
-      </h6>
-    </div>
-
-
-<!-- Gráfico de evolução -->
-<div class="card shadow p-3 mb-4">
-  <h5 class="mb-3">📈 Evolução do valor arrecadado</h5>
-  <canvas id="graficoEvolucao" height="100"></canvas>
-</div>
-    
-
-    <!-- Histórico de meses -->
-    <div class="card shadow p-3 mb-4">
-      <h5 class="mb-3">📅 Histórico de meses</h5>
-      <div class="table-responsive">
-        <table class="table table-striped table-bordered align-middle text-center">
-          <thead class="table-dark">
-            <tr>
-              <th>Mês/Ano</th>
-              <th>Pagantes</th>
-              <th>Valor Arrecadado</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="tabelaMeses">
-            <tr><td colspan="4" class="text-muted">Carregando...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Gráfico Modal -->
-    <div class="modal fade" id="modalGrafico" tabindex="-1">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Gráfico de Pagamentos</h5>
-            <button class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <p class="fw-bold">Mês selecionado: <span id="mesSelecionado"></span></p>
-            <canvas id="graficoPagamentos" height="120"></canvas>
-            <p class="mt-3"><strong>Total arrecadado:</strong> <span id="valorMes" class="text-success"></span></p>
-          </div>
-        </div>
-      </div>
-    </div>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4>💒 Minha Contribuição</h4>
+    <button class="btn btn-outline-danger btn-sm" id="btnLogout">Sair</button>
   </div>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <script src="firebase-config.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Botão de pagamento PIX -->
+  <div class="text-center my-4">
+    <button class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#pixModal">
+      💳 Pagar com PIX
+    </button>
+  </div>
 
-  <script>
-    const tabelaMeses = document.getElementById('tabelaMeses');
-    const quantPagantes = document.getElementById('quantPagantes');
-    const valorArrecadado = document.getElementById('valorArrecadado');
-
-    let grafico;
-
-    // ==============================
-    // Carregar dados iniciais
-    // ==============================
-    db.ref('contribuintes').once('value').then(snapshot => {
-      const totalColaboradores = Object.keys(snapshot.val() || {}).length;
-
-      db.ref('pagamentos').once('value').then(snapPag => {
-        const dados = snapPag.val() || {};
-        tabelaMeses.innerHTML = '';
-
-        let arrecadadoGeral = 0;
-        const mesAtualKey = new Date().toISOString().slice(0, 7);
-        let pagantesMesAtual = 0;
-
-        Object.keys(dados).sort().reverse().forEach(mes => {
-          const pagamentosMes = dados[mes];
-          let pagantes = 0;
-          let totalMes = 0;
-
-          Object.keys(pagamentosMes).forEach(id => {
-            if (pagamentosMes[id].status === 'pago') {
-              pagantes++;
-              totalMes += pagamentosMes[id].valorPago || 70;
-              arrecadadoGeral += pagamentosMes[id].valorPago || 70;
-            }
-          });
-
-          if (mes === mesAtualKey) pagantesMesAtual = pagantes;
-
-          tabelaMeses.innerHTML += `
-  <tr>
-    <td>${
-      (() => { 
-        const [ano, mesNum] = mes.split('-');
-        return new Date(Number(ano), Number(mesNum) - 1, 1)
-          .toLocaleString('pt-BR',{month:'long',year:'numeric'});
-      })()
-    }</td>
-    <td>${pagantes} de ${totalColaboradores}</td>
-    <td>R$ ${totalMes.toFixed(2)}</td>
-    <td><button class="btn btn-sm btn-primary" onclick="verGrafico('${mes}', ${pagantes}, ${totalColaboradores-pagantes}, ${totalMes})">Ver Gráfico</button></td>
-  </tr>
-`;
-        });
-
-        quantPagantes.innerText = `${pagantesMesAtual} de ${totalColaboradores}`;
-        valorArrecadado.innerText = `R$ ${arrecadadoGeral.toFixed(2)}`;
-      });
-    });
-
-// ==============================
-// Gráfico de evolução (linha)
-// ==============================
-const ctxEvolucao = document.getElementById('graficoEvolucao').getContext('2d');
-let graficoEvolucao;
-
-db.ref('contribuintes').once('value').then(snapshot => {
-  const totalColaboradores = Object.keys(snapshot.val() || {}).length;
-
-  db.ref('pagamentos').once('value').then(snapPag => {
-    const dados = snapPag.val() || {};
-    tabelaMeses.innerHTML = '';
-
-    let arrecadadoGeral = 0;
-    const mesAtualKey = new Date().toISOString().slice(0, 7);
-    let pagantesMesAtual = 0;
-
-    const labelsEvolucao = [];
-    const valoresEvolucao = [];
-
-    Object.keys(dados).sort().forEach(mes => {
-      const pagamentosMes = dados[mes];
-      let pagantes = 0;
-      let totalMes = 0;
-
-      Object.keys(pagamentosMes).forEach(id => {
-        if (pagamentosMes[id].status === 'pago') {
-          pagantes++;
-          totalMes += pagamentosMes[id].valorPago || 70;
-          arrecadadoGeral += pagamentosMes[id].valorPago || 70;
-        }
-      });
-
-      if (mes === mesAtualKey) pagantesMesAtual = pagantes;
-
-      labelsEvolucao.push(
-  (() => { 
-    const [ano, mesNum] = mes.split('-');
-    return new Date(Number(ano), Number(mesNum) - 1, 1)
-      .toLocaleString('pt-BR',{month:'short',year:'numeric'});
-  })()
-);
-
-valoresEvolucao.push(totalMes);
-
-  
-      
-
-tabelaMeses.innerHTML += `
-  <tr>
-    <td>${
-      (() => { 
-        const [ano, mesNum] = mes.split('-');
-        return new Date(Number(ano), Number(mesNum) - 1, 1)
-          .toLocaleString('pt-BR',{month:'long',year:'numeric'});
-      })()
-    }</td>
-    <td>${pagantes} de ${totalColaboradores}</td>
-    <td>R$ ${totalMes.toFixed(2)}</td>
-    <td><button class="btn btn-sm btn-primary" onclick="verGrafico('${mes}', ${pagantes}, ${totalColaboradores-pagantes}, ${totalMes})">Ver Gráfico</button></td>
-  </tr>
-`;
-    });
-
-    quantPagantes.innerText = `${pagantesMesAtual} de ${totalColaboradores}`;
-    valorArrecadado.innerText = `R$ ${arrecadadoGeral.toFixed(2)}`;
-
-    // Criar gráfico de evolução
-    graficoEvolucao = new Chart(ctxEvolucao, {
-  type: 'line',
-  data: {
-    labels: labelsEvolucao,
-    datasets: [{
-      label: 'Valor arrecadado',
-      data: valoresEvolucao,
-      fill: true,
-      borderColor: '#007bff',
-      backgroundColor: 'rgba(0, 123, 255, 0.1)',
-      tension: 0.3,
-      pointBackgroundColor: '#007bff',
-      pointRadius: 5
-    }]
-  },
-  options: {
-    responsive: true,
-    plugins: {
-      legend: { display: false },
-      datalabels: {
-        anchor: 'end',
-        align: 'top',
-        color: '#007bff',
-        font: { weight: 'bold' },
-        formatter: value => `R$ ${value.toFixed(2)}`
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: { callback: value => `R$ ${value}` }
-      }
-    }
-  },
-  plugins: [ChartDataLabels] // ← Ativa o plugin
-});
-  });
-});
-
-    
-
-    // ==============================
-    // Exibir gráfico modal
-    // ==============================
-    function verGrafico(mes, pagos, pendentes, total) {
-      document.getElementById('mesSelecionado').innerText = 
-  (() => { 
-    const [ano, mesNum] = mes.split('-');
-    return new Date(Number(ano), Number(mesNum) - 1, 1)
-      .toLocaleString('pt-BR',{month:'long',year:'numeric'});
-  })();
-      document.getElementById('valorMes').innerText = `R$ ${total.toFixed(2)}`;
-
-      const ctx = document.getElementById('graficoPagamentos').getContext('2d');
-      if (grafico) grafico.destroy();
-      grafico = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: ['Pagantes', 'Inadimplentes'],
-          datasets: [{
-            data: [pagos, pendentes],
-            backgroundColor: ['#28a745', '#dc3545']
-          }]
-        },
-        options: { responsive: true }
-      });
-
-      new bootstrap.Modal(document.getElementById('modalGrafico')).show();
-    }
-  </script>
+  <!-- Histórico individual -->
+  <div class="card shadow p-3 mb-4">
+    <h5 class="mb-3">📅 Meu Histórico</h5>
+    <div class="table-responsive">
+      <table class="table table-striped table-bordered align-middle text-center">
+        <thead class="table-dark">
+          <tr>
+            <th>Mês/Ano</th>
+            <th>Valor</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaHistorico">
+          <tr><td colspan="3" class="text-muted">Carregando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
 <!-- Modal do PIX -->
 <div class="modal fade" id="pixModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content p-3">
-      <div class="text-center"> <!-- Div para centralizar todo o conteúdo -->
-        <h4 class="mb-3">Pagamento via PIX</h4>
-        
-        <!-- Container do QR Code com margem automática para centralizar -->
-        <div id="qrcode" class="mx-auto" style="width: fit-content;"></div>
-        
-        <p class="mt-3"><strong>Chave PIX:</strong> <span>14.039.230/0001-79</span></p>
-        
-        <div class="d-flex flex-column align-items-center"> <!-- Centraliza os botões -->
-          <button class="btn btn-outline-primary" onclick="copiarChave()">
-            📋 Copiar chave PIX
-          </button>
-          
-          <button class="btn btn-outline-secondary mt-2" onclick="copiarCodigoPIX()">
-            📋 Copiar código PIX completo
-          </button>
-        </div>
-        
-        <p class="mt-3 text-muted small">Após o pagamento, envie o comprovante para confirmar.</p>
-      </div>
+    <div class="modal-content p-3 text-center">
+      <h4 class="mb-3">Pagamento via PIX</h4>
+      <div id="qrcode" class="mb-3"></div>
+      <p><strong>Chave PIX:</strong> <span id="pixChave">seuemail@exemplo.com</span></p>
+      <button class="btn btn-outline-primary" onclick="copiarChave()">📋 Copiar chave</button>
+      <p class="mt-3 text-muted">Após o pagamento, envie o comprovante para confirmar.</p>
     </div>
   </div>
 </div>
 
-
-  <!-- QRCode.js -->
+<!-- Scripts -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
+<script src="firebase-config.js"></script>
+
 <script>
-  // --- DADOS DO PIX ---
-  const chavePIX = "14039230000179";         // Chave PIX (CPF, CNPJ, email ou telefone)
-  const nomeRecebedor = "Igreja C. Nova Esperanca";
-  const cidadeRecebedor = "Nilopolis";
-  const valorPIX = "70.00";                  // Pode deixar "" para valor aberto
-  const idTransacao = "ValenteDavi";         // Até 25 caracteres
-
-  // --- FUNÇÃO PARA GERAR PAYLOAD PIX ---
-  function gerarPayloadPIX() {
-    const nomeFormat = removerAcentos(nomeRecebedor);
-    const cidadeFormat = removerAcentos(cidadeRecebedor);
-
-    // Merchant Account Information (campo 26)
-    const merchantAccountInfo =
-      formatField("00", "BR.GOV.BCB.PIX") +
-      formatField("01", chavePIX);
-
-    // Montagem sem CRC ainda
-    let payload =
-      "000201" + // Payload Format Indicator
-      "26" + formatSize(merchantAccountInfo) + merchantAccountInfo +
-      "52040000" + // Merchant Category Code
-      "5303986" +  // Currency (BRL)
-      (valorPIX ? "54" + formatSize(valorPIX) + valorPIX : "") +
-      "5802BR" +   // País
-      formatField("59", nomeFormat) +
-      formatField("60", cidadeFormat) +
-      formatField("62", formatField("05", idTransacao)) +
-      "6304"; // CRC placeholder
-
-    // Adiciona o CRC calculado
-    payload += calcularCRC16(payload);
-    return payload;
+  // Verifica login
+  const usuarioLogado = localStorage.getItem('usuarioLogado');
+  if (!usuarioLogado) {
+    window.location.href = 'login.html';
   }
 
-  // --- Funções auxiliares ---
-  function formatField(id, value) {
-    return id + formatSize(value) + value;
-  }
+  // Logout
+  document.getElementById('btnLogout').addEventListener('click', () => {
+    localStorage.removeItem('usuarioLogado');
+    window.location.href = 'login.html';
+  });
 
-  function formatSize(value) {
-    return ("00" + value.length).slice(-2);
-  }
+  // PIX
+  const chavePIX = "seuemail@exemplo.com";
+  const nomeIgreja = "Nome da Igreja";
+  const cidade = "Cidade - UF";
+  const valor = "70.00";
 
-  function removerAcentos(texto) {
-    return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  }
-
-  function calcularCRC16(payload) {
-    let polinomio = 0x1021;
-    let resultado = 0xFFFF;
-
-    for (let i = 0; i < payload.length; i++) {
-      resultado ^= (payload.charCodeAt(i) << 8);
-      for (let j = 0; j < 8; j++) {
-        if ((resultado & 0x8000) !== 0) {
-          resultado = (resultado << 1) ^ polinomio;
-        } else {
-          resultado <<= 1;
-        }
-        resultado &= 0xFFFF;
-      }
-    }
-    return resultado.toString(16).toUpperCase().padStart(4, "0");
-  }
-
-  // --- Gera QR Code ---
   function gerarCodigoPIX() {
-    document.getElementById("qrcode").innerHTML = "";
+    const payload = `00020126330014BR.GOV.BCB.PIX0114${chavePIX}520400005303986540${valor}5802BR5913${nomeIgreja}6009${cidade}62070503***6304`;
+    document.getElementById('qrcode').innerHTML = '';
     new QRCode(document.getElementById("qrcode"), {
-      text: gerarPayloadPIX(),
+      text: payload,
       width: 200,
-      height: 200,
-      correctLevel: QRCode.CorrectLevel.H
+      height: 200
     });
   }
 
-  // --- Copiar apenas chave PIX ---
   function copiarChave() {
-    navigator.clipboard.writeText(chavePIX)
-      .then(() => alert("✅ Chave PIX copiada!"))
-      .catch(() => alert("⚠️ Falha ao copiar a chave PIX."));
+    navigator.clipboard.writeText(chavePIX).then(() => {
+      alert("✅ Chave PIX copiada!");
+    });
   }
 
-  // --- Copiar código PIX completo ---
-  function copiarCodigoPIX() {
-    navigator.clipboard.writeText(gerarPayloadPIX())
-      .then(() => alert("✅ Código PIX copiado!"))
-      .catch(() => alert("⚠️ Falha ao copiar o código PIX."));
-  }
-
-  // --- Evento para gerar quando abrir modal ---
   document.getElementById('pixModal').addEventListener('show.bs.modal', gerarCodigoPIX);
+
+  // Carregar histórico individual
+  function carregarHistorico() {
+    db.ref('pagamentos').once('value').then(snap => {
+      const dados = snap.val() || {};
+      let html = '';
+      Object.keys(dados).forEach(mes => {
+        for (let id in dados[mes]) {
+          if (dados[mes][id].nome && dados[mes][id].nome.toLowerCase() === usuarioLogado.toLowerCase()) {
+            const p = dados[mes][id];
+            html += `<tr>
+              <td>${new Date(mes + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</td>
+              <td>R$ ${(p.valorPago || 0).toFixed(2)}</td>
+              <td>${p.status}</td>
+            </tr>`;
+          }
+        }
+      });
+      document.getElementById('tabelaHistorico').innerHTML = html || '<tr><td colspan="3">Nenhum pagamento</td></tr>';
+    });
+  }
+
+  carregarHistorico();
 </script>
 
-
-  
 </body>
 </html>
