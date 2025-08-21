@@ -1,1 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Gerador de Prompts Bíblicos</title>
+</head>
+<body>
+  <h2>Gerador de Prompts VEO-3</h2>
+  
+  <label>Personagem Bíblico:</label>
+  <input id="personagem" value="Jesus"><br><br>
 
+  <label>Evento:</label>
+  <input id="evento" value="Santa Ceia"><br><br>
+
+  <label>Local:</label>
+  <input id="local" value="Igreja Nova Esperança"><br><br>
+
+  <label>Data:</label>
+  <input id="data" value="neste Domingo"><br><br>
+
+  <button onclick="gerar()">Gerar Prompt</button>
+
+  <h3>Prompt em Português</h3>
+  <textarea id="outputPT" rows="20" cols="100"></textarea>
+
+  <h3>Prompt em Inglês (fala em Português)</h3>
+  <textarea id="outputEN" rows="20" cols="100"></textarea>
+
+  <script>
+    function gerar() {
+      const personagem = document.getElementById("personagem").value;
+      const evento = document.getElementById("evento").value;
+      const local = document.getElementById("local").value;
+      const data = document.getElementById("data").value;
+
+      const fala1 = `Olá, sou ${personagem}.`;
+      const fala2 = `Neste ${data}, teremos ${evento} na ${local}.`;
+      const fala3 = `Venham participar comigo e meus discípulos.`;
+
+      // ---------- JSON em Português ----------
+      const promptPT = {
+        model: "veo-3",
+        duration_seconds: 8,
+        aspect_ratio: "16:9",
+        output_audio: true,
+        language: "pt-BR",
+        purpose: "Vídeo curto bíblico, estilo vlog, em primeira pessoa, sons de fundo da época.",
+
+        character: {
+          name: personagem,
+          age: "30",
+          gender: "male",
+          ethnicity_hint: "Semitic, Biblical period",
+          wardrobe: "Túnica clara e manto leve, estilo do Novo Testamento",
+          makeup_hair: "Cabelo médio, barba bem cuidada",
+          behavior: "expressive, calm, warm, inviting tone"
+        },
+
+        setting: {
+          era: "New Testament",
+          location: local,
+          time_of_day: "manhã",
+          weather: "ensolarado, luz suave",
+          extras: {
+            crowd_size: "alguns discípulos e fiéis reunidos, murmúrio audível",
+            animals: "pombas ao fundo, voo suave",
+            props: "mesa simples com pão e vinho, jarros de barro"
+          }
+        },
+
+        script_ptBR: {
+          register: "Portuguese (Brazil), respectful, warm",
+          lines: [
+            { text: fala1, start: 0.0, end: 1.5 },
+            { text: fala2, start: 1.5, end: 5.0 },
+            { text: fala3, start: 5.0, end: 7.5 }
+          ],
+          captioning: "none"
+        }
+      };
+
+      // ---------- JSON em Inglês (mas fala em PT) ----------
+      const promptEN = {
+        model: "veo-3",
+        duration_seconds: 8,
+        aspect_ratio: "16:9",
+        output_audio: true,
+        language: "pt-BR",
+        purpose: "Biblical short video, vlog style, first-person, with authentic background sounds.",
+
+        character: {
+          name: personagem,
+          age: "30",
+          gender: "male",
+          ethnicity_hint: "Semitic, Biblical period",
+          wardrobe: "Light tunic and mantle, New Testament style",
+          makeup_hair: "Medium hair, well-kept beard",
+          behavior: "expressive, calm, inviting"
+        },
+
+        setting: {
+          era: "New Testament",
+          location: local,
+          time_of_day: "morning",
+          weather: "sunny, soft light",
+          extras: {
+            crowd_size: "some disciples and believers in the background",
+            animals: "doves flying and cooing softly",
+            props: "simple wooden table with bread and wine, clay jars"
+          }
+        },
+
+        script_ptBR: {
+          register: "Portuguese (Brazil), respectful, warm",
+          lines: [
+            { text: fala1, start: 0.0, end: 1.5 },
+            { text: fala2, start: 1.5, end: 5.0 },
+            { text: fala3, start: 5.0, end: 7.5 }
+          ],
+          captioning: "none"
+        }
+      };
+
+      // Exibir na tela
+      document.getElementById("outputPT").value = JSON.stringify(promptPT, null, 2);
+      document.getElementById("outputEN").value = JSON.stringify(promptEN, null, 2);
+    }
+  </script>
+</body>
+</html>
