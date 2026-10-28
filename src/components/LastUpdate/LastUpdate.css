@@ -1,0 +1,141 @@
+.last-update {
+  background: linear-gradient(135deg, rgba(18, 35, 55, 0.9) 0%, rgba(12, 26, 42, 0.95) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  border-radius: 12px;
+  padding: 16px;
+  backdrop-filter: blur(10px);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(56, 189, 248, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition: all 0.3s ease;
+}
+
+.last-update.compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 20px;
+}
+
+.last-update.stale {
+  border-color: rgba(249, 115, 22, 0.3);
+  background: linear-gradient(135deg, rgba(45, 30, 20, 0.9) 0%, rgba(35, 20, 15, 0.95) 100%);
+}
+
+.update-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.update-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.update-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+.update-status.stale {
+  background: #f97316;
+  box-shadow: 0 0 8px #f97316;
+  animation: statusPulseStale 1s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.9); }
+}
+
+@keyframes statusPulseStale {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.update-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.update-date {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #f8fafc;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.update-relative {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.last-update.compact .update-relative {
+  color: #64748b;
+}
+
+.update-warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: rgba(249, 115, 22, 0.15);
+  border: 1px solid rgba(249, 115, 22, 0.2);
+  border-radius: 8px;
+  color: #f97316;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.update-icon {
+  color: #38bdf8;
+  flex-shrink: 0;
+}
+
+.last-update.compact .update-time {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #f8fafc;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.last-update.compact .update-relative {
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+.last-update.compact.stale .update-time,
+.last-update.compact.stale .update-relative {
+  color: #f97316;
+}
+
+/* Responsividade */
+@media (max-width: 480px) {
+  .last-update {
+    padding: 12px;
+  }
+
+  .update-date {
+    font-size: 0.8rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .update-status {
+    animation: none !important;
+  }
+}

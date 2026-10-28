@@ -1,0 +1,164 @@
+.chart-container {
+  background: linear-gradient(135deg, rgba(18, 35, 55, 0.9) 0%, rgba(12, 26, 42, 0.95) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  border-radius: 16px;
+  padding: 20px;
+  backdrop-filter: blur(10px);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(56, 189, 248, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.chart-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.3), transparent);
+}
+
+.chart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.chart-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+/* Tooltip personalizado do Chart.js */
+.chartjs-tooltip {
+  background: rgba(12, 26, 42, 0.95) !important;
+  border: 1px solid rgba(56, 189, 248, 0.2) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+  padding: 12px !important;
+}
+
+.chartjs-tooltip-title {
+  color: #f8fafc !important;
+  font-family: 'Inter, sans-serif' !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  margin-bottom: 8px !important;
+}
+
+.chartjs-tooltip-body {
+  color: #e2e8f0 !important;
+  font-family: 'Inter, sans-serif' !important;
+  font-size: 11px !important;
+}
+
+/* Legenda personalizada */
+.chartjs-legend {
+  padding: 0 !important;
+}
+
+.chartjs-legend ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: flex-start;
+}
+
+.chartjs-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.chartjs-legend li:hover {
+  opacity: 0.7;
+}
+
+.chartjs-legend li.hidden {
+  opacity: 0.3;
+}
+
+.chartjs-legend span {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+}
+
+.chartjs-legend span[style*="rgb(56, 189, 248)"] {
+  background: rgba(56, 189, 248, 0.6);
+  border-color: #38bdf8;
+}
+
+.chartjs-legend span[style*="rgb(34, 197, 94)"] {
+  background: rgba(34, 197, 94, 0.6);
+  border-color: #22c55e;
+}
+
+.chartjs-legend span[style*="rgb(249, 115, 22)"] {
+  background: rgba(249, 115, 22, 0.6);
+  border-color: #f97316;
+}
+
+.chartjs-legend span[style*="rgb(239, 68, 68)"] {
+  background: rgba(239, 68, 68, 0.6);
+  border-color: #ef4444;
+}
+
+.chartjs-legend span[style*="rgb(6, 182, 212)"] {
+  background: rgba(6, 182, 212, 0.6);
+  border-color: #06b6d4;
+}
+
+.chartjs-legend span[style*="rgb(71, 85, 105)"] {
+  background: rgba(71, 85, 105, 0.4);
+  border-color: #475569;
+}
+
+/* Responsividade */
+@media (max-width: 480px) {
+  .chart-container {
+    padding: 16px;
+  }
+
+  .chartjs-legend ul {
+    gap: 12px;
+  }
+}
+
+/* Animações suaves para os gráficos */
+@keyframes chartFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chart-container {
+  animation: chartFadeIn 0.6s ease-out forwards;
+}
+
+/* Reduzir movimento para acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+  .chart-container {
+    animation: none;
+  }
+}

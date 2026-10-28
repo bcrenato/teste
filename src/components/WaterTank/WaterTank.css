@@ -1,0 +1,379 @@
+.water-tank-container {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.water-tank-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 500px;
+}
+
+/* Animações da água */
+@keyframes waveFlow {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-40px); }
+}
+
+@keyframes bubbleRise {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-60px) scale(0.5);
+    opacity: 0;
+  }
+}
+
+@keyframes flowStream {
+  0% {
+    stroke-dashoffset: 0;
+    opacity: 0.7;
+  }
+  100% {
+    stroke-dashoffset: -20;
+    opacity: 0.3;
+  }
+}
+
+@keyframes flowDrop {
+  0% {
+    transform: translateX(0) scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateX(30px) scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes inletFlowStream {
+  0% {
+    stroke-dashoffset: 0;
+    opacity: 0.8;
+  }
+  100% {
+    stroke-dashoffset: 20;
+    opacity: 0.3;
+  }
+}
+
+@keyframes inletFlowDrop {
+  0% {
+    transform: translateX(0) scale(1);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(-30px) scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes flowArrow {
+  0% {
+    transform: translateX(0);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateX(-10px);
+    opacity: 0.3;
+  }
+}
+
+@keyframes levelPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.9; }
+}
+
+/* Aplicar animações */
+.water-pattern {
+  animation: waveFlow 8s linear infinite;
+}
+
+.bubble {
+  animation: bubbleRise 3s ease-in-out infinite;
+}
+
+.flow-stream {
+  stroke-dasharray: 10 5;
+  animation: flowStream 1.5s linear infinite;
+}
+
+.flow-drop {
+  animation: flowDrop 1.5s ease-out infinite;
+}
+
+.inlet-stream {
+  stroke-dasharray: 10 5;
+  animation: inletFlowStream 1.2s linear infinite;
+}
+
+.inlet-drop {
+  animation: inletFlowDrop 1.2s ease-out infinite;
+}
+
+.flow-arrow {
+  animation: flowArrow 1s ease-in-out infinite;
+}
+
+.surface-wave {
+  animation: waveFlow 4s ease-in-out infinite;
+}
+
+.surface-wave-secondary {
+  animation: waveFlow 6s ease-in-out infinite reverse;
+}
+
+.level-line {
+  animation: levelPulse 2s ease-in-out infinite;
+}
+
+/* Transição suave do nível da água */
+.water-fill {
+  transition: height 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              y 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.water-pattern {
+  transition: height 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              y 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.water-highlight {
+  transition: cy 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.surface-wave,
+.surface-wave-secondary {
+  transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.level-line {
+  transition: y1 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              y2 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.level-percent-text {
+  transition: y 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Painel de informações */
+.water-tank-info {
+  position: absolute;
+  bottom: -80px;
+  left: 0;
+  right: 0;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(12, 26, 42, 0.95) 0%, rgba(18, 35, 55, 0.95) 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  backdrop-filter: blur(10px);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(56, 189, 248, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.tank-level-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.level-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #f8fafc;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  line-height: 1;
+  text-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+}
+
+.level-unit {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #38bdf8;
+  margin-left: 2px;
+}
+
+.level-litros {
+  font-size: 1rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.tank-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.status-badge::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.status-vazia { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+.status-baixa { background: rgba(249, 115, 22, 0.2); color: #f97316; border: 1px solid rgba(249, 115, 22, 0.3); }
+.status-normal { background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); }
+.status-enchendo { background: rgba(59, 130, 246, 0.2); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
+.status-cheia { background: rgba(6, 182, 212, 0.2); color: #06b6d4; border: 1px solid rgba(6, 182, 212, 0.3); }
+
+.capacity-info {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Legenda das tubulações */
+.pipe-legend {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(56, 189, 248, 0.1);
+}
+
+.pipe-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.pipe-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pipe-color.inlet-color {
+  background: linear-gradient(135deg, #4a5a6a, #5a6f82);
+}
+
+.pipe-color.outlet-color {
+  background: linear-gradient(135deg, #4a5a6a, #5a6f82);
+}
+
+.pipe-flow-indicator {
+  font-size: 0.7rem;
+  color: #38bdf8;
+  animation: statusPulse 1.5s ease-in-out infinite;
+}
+
+/* Responsividade */
+@media (max-width: 480px) {
+  .water-tank-container {
+    max-width: 280px;
+  }
+
+  .water-tank-info {
+    bottom: -75px;
+    padding: 12px;
+  }
+
+  .level-value {
+    font-size: 2rem;
+  }
+
+  .pipe-legend {
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+  }
+}
+
+@media (min-width: 768px) {
+  .water-tank-container {
+    max-width: 360px;
+  }
+
+  .level-value {
+    font-size: 3rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .water-tank-container {
+    max-width: 400px;
+  }
+}
+
+/* Reduzir movimento para acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+  .water-pattern,
+  .bubble,
+  .flow-stream,
+  .flow-drop,
+  .inlet-stream,
+  .inlet-drop,
+  .flow-arrow,
+  .surface-wave,
+  .surface-wave-secondary,
+  .level-line,
+  .status-badge::before,
+  .pipe-flow-indicator {
+    animation: none !important;
+  }
+
+  .water-fill,
+  .water-pattern,
+  .water-highlight,
+  .surface-wave,
+  .surface-wave-secondary,
+  .level-line,
+  .level-percent-text {
+    transition: none !important;
+  }
+}
+
+/* Modo de alto contraste */
+@media (prefers-contrast: high) {
+  .water-tank-info {
+    border: 2px solid #38bdf8;
+  }
+
+  .status-badge {
+    border-width: 2px;
+  }
+
+  .pipe-color {
+    border-width: 2px;
+  }
+}

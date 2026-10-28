@@ -1,0 +1,135 @@
+.connection-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 24px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.connection-status.connected {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.connection-status.disconnected {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.connection-indicator {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.pulse-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  opacity: 0.4;
+  animation: pulseRing 2s ease-out infinite;
+}
+
+.pulse-ring:nth-child(2) {
+  animation-delay: 1s;
+}
+
+.pulse-dot {
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.connection-status.connected .pulse-dot {
+  animation: pulseDot 2s ease-in-out infinite;
+}
+
+@keyframes pulseRing {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+@keyframes pulseDot {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 8px currentColor;
+  }
+  50% {
+    transform: scale(1.2);
+    box-shadow: 0 0 16px currentColor;
+  }
+}
+
+.connection-signal {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+  margin-left: 4px;
+}
+
+.connection-signal span {
+  width: 3px;
+  border-radius: 2px 2px 0 0;
+  background: currentColor;
+  opacity: 0.5;
+}
+
+.connection-status.connected .connection-signal span {
+  animation: signalWave 1.5s ease-in-out infinite;
+}
+
+.connection-status.disconnected .connection-signal span {
+  height: 100%;
+  opacity: 0.3;
+}
+
+@keyframes signalWave {
+  0%, 100% { height: 20%; opacity: 0.3; }
+  50% { height: 100%; opacity: 1; }
+}
+
+.connection-signal span:nth-child(1) { animation-delay: 0ms; }
+.connection-signal span:nth-child(2) { animation-delay: 100ms; }
+.connection-signal span:nth-child(3) { animation-delay: 200ms; }
+.connection-signal span:nth-child(4) { animation-delay: 300ms; }
+
+.connection-label {
+  letter-spacing: 0.02em;
+}
+
+/* Responsividade */
+@media (max-width: 480px) {
+  .connection-status {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+  }
+
+  .connection-signal {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-ring,
+  .pulse-dot,
+  .connection-signal span {
+    animation: none !important;
+  }
+}

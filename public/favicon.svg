@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Background circle -->
+  <circle cx="32" cy="32" r="30" fill="#0a121a" stroke="#38bdf8" stroke-width="2"/>
+
+  <!-- Water tank shape -->
+  <path d="M16 14 L16 46 Q16 52 22 52 L42 52 Q48 52 48 46 L48 14 Q48 8 42 8 L22 8 Q16 8 16 14 Z" fill="#1a2a3d" stroke="#38bdf8" stroke-width="1.5"/>
+
+  <!-- Water level -->
+  <path d="M19 38 Q23 35 32 38 Q41 41 45 38" fill="#38bdf8" fill-opacity="0.6"/>
+
+  <!-- Water surface highlight -->
+  <path d="M20 38 Q26 36 32 38 Q38 40 44 38" stroke="#7dd3fc" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Pump icon -->
+  <circle cx="32" cy="24" r="6" fill="#22c55e" fill-opacity="0.9"/>
+  <path d="M32 18 L32 12" stroke="#22c55e" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="32" cy="12" r="3" fill="#22c55e"/>
+
+  <!-- Percentage indicator -->
+  <text x="32" y="56" text-anchor="middle" fill="#38bdf8" font-family="JetBrains Mono, monospace" font-size="10" font-weight="bold">75%</text>
+</svg>
