@@ -1,0 +1,68 @@
+name: Gerar APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apk.yml'
+      - 'package.json'
+      - 'capacitor.config.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Instalar Capacitor
+        run: npm install
+
+      - name: Pasta www (reserva; o app abre o site online)
+        run: |
+          mkdir www
+          echo '<meta http-equiv="refresh" content="0;url=https://bcrenato.github.io/teste/">' > www/index.html
+
+      - name: Criar projeto Android
+        run: |
+          npx cap add android
+          npx cap sync android
+
+      - name: Ícone do app (se falhar, usa o padrão)
+        continue-on-error: true
+        run: |
+          mkdir -p assets
+          convert icons/icon-512.png -resize 1024x1024 assets/icon-only.png
+          npx --yes @capacitor/assets generate --android
+
+      - name: Usar assinatura fixa
+        run: |
+          mkdir -p ~/.android
+          cp debug.keystore ~/.android/debug.keystore
+
+      - name: Compilar APK
+        working-directory: android
+        run: ./gradlew assembleDebug
+
+      - name: Publicar na aba Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk caixa-dagua.apk
+          gh release delete apk-latest --cleanup-tag -y || true
+          gh release create apk-latest caixa-dagua.apk \
+            --target "${{ github.sha }}" \
+            --title "APK mais recente" \
+            --notes "Gerado automaticamente em $(date -u +'%d/%m/%Y %H:%M') UTC (commit ${GITHUB_SHA::7})"

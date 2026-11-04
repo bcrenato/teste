@@ -24,12 +24,30 @@
 <!-- ============ PAINEL ============ -->
 <section id="v-painel" class="view on">
   <div class="card hero">
-    <div class="tank">
-      <div class="clip"><div id="water" class="water"><svg class="wave" viewBox="0 0 200 12" preserveAspectRatio="none"><path d="M0 6 Q25 0 50 6 T100 6 T150 6 T200 6 V12 H0Z"/></svg></div></div>
-      <img src="caixa.png" alt="">
-      <div id="marks"></div>
+    <div class="scene" id="scene">
+      <div class="tank">
+        <div class="clip"><div id="water" class="water"><svg class="wave" viewBox="0 0 200 12" preserveAspectRatio="none"><path d="M0 6 Q25 0 50 6 T100 6 T150 6 T200 6 V12 H0Z"/></svg></div></div>
+        <img src="caixa.png" alt="">
+        <div id="marks"></div>
+      </div>
+      <svg class="pipes" viewBox="0 0 1200 1200" aria-hidden="true">
+        <path class="p-out" d="M150 750V345Q150 330 165 330H400Q415 330 415 345V382"/>
+        <path class="p-in" d="M150 750V345Q150 330 165 330H400Q415 330 415 345V382"/>
+        <path class="p-flow" d="M150 750V345Q150 330 165 330H400Q415 330 415 345V382"/>
+        <line id="stream" class="p-flow p-fall" x1="415" y1="382" x2="415" y2="600"/>
+        <g class="pump">
+          <rect x="15" y="843" width="195" height="14" rx="5" fill="#475569"/>
+          <rect x="0" y="787" width="26" height="16" fill="#f8fafc"/>
+          <rect x="22" y="757" width="88" height="80" rx="12" fill="#1d4ed8"/>
+          <path d="M42 765V829M58 765V829M74 765V829M90 765V829" stroke="#1e40af" stroke-width="5"/>
+          <circle cx="150" cy="795" r="50" fill="#2563eb" stroke="#1e3a8a" stroke-width="4"/>
+          <circle cx="150" cy="795" r="31" fill="#0f172a"/>
+          <g class="fan"><path d="M150 795V770M150 795L172 808M150 795L128 808" stroke="#38bdf8" stroke-width="7" stroke-linecap="round"/></g>
+          <circle class="led" cx="66" cy="777" r="6"/>
+        </g>
+      </svg>
+      <div class="read"><b id="percent">0%</b><span id="litros">0 L</span></div>
     </div>
-    <div class="read"><b id="percent">0%</b><span id="litros">0 L</span></div>
     <div id="status" class="badge">Inicializando…</div>
   </div>
 

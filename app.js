@@ -16,7 +16,8 @@ const db=firebase.database();
 const $=id=>document.getElementById(id);
 const AREA_UTIL=49,H_UTIL=75,R_BASE=58,R_TOPO=75.5;
 let cfg={margem_queda:5,nivel_ligar:40,nivel_desligar:80};
-let bombaLigada=false;
+let bombaLigada=false,alturaAtual=0;
+function atualizarStream(){const y=862*(1-alturaAtual/100),s=$('stream');s.style.display=(bombaLigada&&y>400)?'':'none';s.setAttribute('y2',Math.max(y,400))}
 
 /* ============ UI: toast, confirmação, abas ============ */
 let tt;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2600)}
@@ -42,6 +43,7 @@ function contar(para){cancelAnimationFrame(anim);const de=nivelMostrado,t0=perfo
 
 function atualizarNivel(nivel,litros){
   $('water').style.height=Math.max(0,Math.min(100,alturaVisual(nivel)))+'%';
+  alturaAtual=alturaVisual(nivel);atualizarStream();
   contar(nivel);$('litros').textContent=Math.round(litros)+' L';
   const lig=cfg.nivel_ligar??40,des=cfg.nivel_desligar??80;
   let cls='',st='Normal',bd='',al='';
@@ -77,7 +79,7 @@ db.ref('/').on('value',s=>{
   if(d.nivel!==undefined)atualizarNivel(+d.nivel,+d.litros||litrosTronco(+d.nivel));
   desenharMarcas(d.boias);
   $('boias').textContent=[20,40,60,80].map(x=>d.boias?.[x]?'🟢':'⚪').join('');
-  bombaLigada=!!d.status_bomba;
+  bombaLigada=!!d.status_bomba;$('scene').classList.toggle('on',bombaLigada);atualizarStream();
   $('sBomba').textContent=bombaLigada?'🟢 Ligada':'🔴 Desligada';
   $('sModo').textContent=d.modo_manual?'Manual':'Automático';
   $('mAuto').classList.toggle('on',!d.modo_manual);$('mMan').classList.toggle('on',!!d.modo_manual);

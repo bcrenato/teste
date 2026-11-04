@@ -5,8 +5,6 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/apk.yml'
-      - 'package.json'
-      - 'capacitor.config.json'
   workflow_dispatch:
 
 permissions:
@@ -14,55 +12,74 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - name: Listar arquivos do repositório (diagnóstico)
+        run: ls -la && find . -maxdepth 2 -not -path './.git/*' | head -60
+
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 17
 
+      - name: Criar configuração do Capacitor
+        run: |
+          cat > package.json <<'EOF'
+          {
+            "name": "caixa-dagua",
+            "version": "1.0.0",
+            "private": true,
+            "dependencies": {
+              "@capacitor/android": "^6.2.0",
+              "@capacitor/cli": "^6.2.0",
+              "@capacitor/core": "^6.2.0"
+            }
+          }
+          EOF
+          cat > capacitor.config.json <<'EOF'
+          {
+            "appId": "br.com.caixadagua",
+            "appName": "Caixa d'Água",
+            "webDir": "www",
+            "backgroundColor": "#0b1220",
+            "server": {
+              "url": "https://bcrenato.github.io/teste/",
+              "androidScheme": "https",
+              "allowNavigation": ["bcrenato.github.io"]
+            }
+          }
+          EOF
+          mkdir -p www
+          echo '<meta http-equiv="refresh" content="0;url=https://bcrenato.github.io/teste/">' > www/index.html
+
       - name: Instalar Capacitor
         run: npm install
-
-      - name: Pasta www (reserva; o app abre o site online)
-        run: |
-          mkdir www
-          echo '<meta http-equiv="refresh" content="0;url=https://bcrenato.github.io/teste/">' > www/index.html
 
       - name: Criar projeto Android
         run: |
           npx cap add android
           npx cap sync android
+          chmod +x android/gradlew
 
       - name: Ícone do app (se falhar, usa o padrão)
         continue-on-error: true
         run: |
+          pip install pillow
+          ICON=$(find . -name icon-512.png -not -path './node_modules/*' -not -path './android/*' | head -1)
+          echo "Ícone: $ICON"
           mkdir -p assets
-          convert icons/icon-512.png -resize 1024x1024 assets/icon-only.png
+          python3 -c "
+          from PIL import Image
+          Image.open('$ICON').convert('RGBA').resize((1024,1024)).save('assets/icon-only.png')
+          "
           npx --yes @capacitor/assets generate --android
 
-      - name: Usar assinatura fixa
+      - name: Assinatura do APK
         run: |
           mkdir -p ~/.android
-          cp debug.keystore ~/.android/debug.keystore
-
-      - name: Compilar APK
-        working-directory: android
-        run: ./gradlew assembleDebug
-
-      - name: Publicar na aba Releases
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          cp android/app/build/outputs/apk/debug/app-debug.apk caixa-dagua.apk
-          gh release delete apk-latest --cleanup-tag -y || true
-          gh release create apk-latest caixa-dagua.apk \
-            --target "${{ github.sha }}" \
-            --title "APK mais recente" \
-            --notes "Gerado automaticamente em $(date -u +'%d/%m/%Y %H:%M') UTC (commit ${GITHUB_SHA::7})"

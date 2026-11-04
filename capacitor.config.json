@@ -1,0 +1,11 @@
+{
+  "appId": "br.com.caixadagua",
+  "appName": "Caixa d'Água",
+  "webDir": "www",
+  "backgroundColor": "#0b1220",
+  "server": {
+    "url": "https://bcrenato.github.io/teste/",
+    "androidScheme": "https",
+    "allowNavigation": ["bcrenato.github.io"]
+  }
+}
