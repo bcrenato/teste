@@ -16,7 +16,7 @@
 </head>
 <body>
 <header class="top">
-  <div><h1>Caixa d’Água</h1><p>Monitoramento e automação</p></div>
+  <div><h1 id="titulo">Caixa d’Água</h1><p>Monitoramento e automação</p></div>
   <div id="conn" class="pill off"><i></i><span>Conectando</span></div>
 </header>
 
@@ -131,13 +131,23 @@
   </div>
 
   <div class="card">
-    <h3>🎚️ Calibração das boias (%)</h3>
+    <label style="margin-top:0">Nome do local (aparece no título)<input id="nome_local" type="text" maxlength="24" placeholder="Ex.: Casa da praia"></label>
+    <h3>📐 Caixa d’água (tronco de cone)</h3>
+    <p class="muted">Medidas internas da caixa. O volume de cada nível é calculado por elas e ajustado à capacidade nominal.</p>
     <div class="two">
-      <label>Boia 1<input id="boia20" type="number" inputmode="numeric"></label>
-      <label>Boia 2<input id="boia40" type="number" inputmode="numeric"></label>
-      <label>Boia 3<input id="boia60" type="number" inputmode="numeric"></label>
-      <label>Boia 4<input id="boia80" type="number" inputmode="numeric"></label>
+      <label>Capacidade nominal (L)<input id="caixa_litros" type="number" inputmode="numeric"></label>
+      <label>Altura interna (cm)<input id="caixa_altura" type="number" inputmode="numeric"></label>
+      <label>Diâmetro da base (cm)<input id="caixa_diam_base" type="number" inputmode="numeric"></label>
+      <label>Diâmetro do topo (cm)<input id="caixa_diam_topo" type="number" inputmode="numeric"></label>
     </div>
+    <h3 style="margin-top:20px">🎚️ Altura de cada boia (cm, do fundo)</h3>
+    <div class="two">
+      <label>Boia 1<input id="boia20_cm" type="number" inputmode="decimal" step="any"></label>
+      <label>Boia 2<input id="boia40_cm" type="number" inputmode="decimal" step="any"></label>
+      <label>Boia 3<input id="boia60_cm" type="number" inputmode="decimal" step="any"></label>
+      <label>Boia 4<input id="boia80_cm" type="number" inputmode="decimal" step="any"></label>
+    </div>
+    <div id="geoInfo" class="geo"></div>
     <h3 style="margin-top:20px">💧 Calibração visual da água (%)</h3>
     <div class="two">
       <label>Real 0%<input id="tela0" type="number" inputmode="numeric"></label>

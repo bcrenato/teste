@@ -22,3 +22,6 @@ Os tokens do Telegram e do VoiceMonkey foram deixados em branco no arquivo: veja
 2. Ferramentas > Partition Scheme > "Minimal SPIFFS (1.9MB APP with OTA/190KB SPIFFS)" e grave pela rede (Porta de rede / OTA).
 3. Se a gravação por rede falhar, o firmware antigo continua funcionando (nada é perdido).
 4. O arquivo novo traz SERIAL_DEBUG 0 (Monitor Serial desligado) para economizar espaço; mude para 1 se quiser ver as mensagens.
+
+## Correção da margem de queda após reiniciar o ESP (v4.2)
+Depois de qualquer reinício (inclusive a gravação por OTA) o ESP não sabia se a água subia ou descia e mostrava a boia real (ex.: 40 em vez de 55). Agora, se a bomba estiver desligada no reinício, ele assume que a água está descendo e usa a margem de queda (80->75, 60->55, 40->35, 20->15).

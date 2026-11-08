@@ -87,3 +87,4 @@ label.chk{display:flex;gap:10px;align-items:center;color:var(--tx);font-size:14p
 .hist{max-height:340px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-right:8px;margin-right:-4px;scrollbar-width:thin;scrollbar-color:var(--blue) transparent}
 .hist::-webkit-scrollbar{width:6px}.hist::-webkit-scrollbar-track{background:transparent}
 .hist::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px}.hist::-webkit-scrollbar-thumb:hover{background:var(--blue)}
+.geo{margin-top:12px;font-size:13px;color:var(--mut);line-height:1.7}.geo b{color:var(--tx)}

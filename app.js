@@ -59,20 +59,26 @@ auth.onAuthStateChanged(u=>{usuario=u;
 const registrar=acao=>db.ref('log_comandos').push({uid:usuario.uid,usuario:nomeUsuario(),acao,ts:firebase.database.ServerValue.TIMESTAMP});
 
 /* ============ Água ============ */
-const H_UTIL=75,R_BASE=58,R_TOPO=75.5;
-function litrosTronco(n){if(n<=0)return 0;const h=n/100*H_UTIL,r=R_BASE+(R_TOPO-R_BASE)*(h/H_UTIL);return Math.PI*h/3*(r*r+r*R_BASE+R_BASE*R_BASE)/1000}
+// Volume (L) até a altura h (cm) de uma caixa em tronco de cone: raio varia linearmente da base ao topo.
+function volTronco(h,H,Rb,Rt){const r=Rb+(Rt-Rb)*(h/H);return Math.PI*h/3*(r*r+r*Rb+Rb*Rb)/1000}
+function geoCfg(){return{H:cfg.caixa_altura??75,Rb:(cfg.caixa_diam_base??116)/2,Rt:(cfg.caixa_diam_topo??151)/2,nom:cfg.caixa_litros??0}}
+function litrosTronco(n){
+  const g=geoCfg();if(n<=0)return 0;
+  const cheio=volTronco(g.H,g.H,g.Rb,g.Rt),k=g.nom>=100&&cheio>0?g.nom/cheio:1;
+  return volTronco(Math.min(n,100)/100*g.H,g.H,g.Rb,g.Rt)*k}
 // Quando a água desce, a boia desliga e o nível mostrado é (marca - margem de queda): 80→75, 60→55, 40→35, 20→15.
 // O ESP já faz isso; aqui garantimos o mesmo resultado caso o valor chegue como a marca "real".
 function nivelComMargem(n,boias){
   const margem=cfg.margem_queda??5;
   for(const m of [80,60,40,20]){const marca=cfg['boia'+m]??m;if(boias&&boias[m]===false&&n>=marca)return marca-margem}
   return n}
+const TELA_PADRAO={0:12,20:23,40:35,60:46,80:57,100:68}; // interior da imagem da caixa
 function alturaVisual(n){
-  const p=[0,20,40,60,80,100].map(x=>[x,cfg['tela'+x]??x]);
+  const p=[0,20,40,60,80,100].map(x=>[x,cfg['tela'+x]??TELA_PADRAO[x]]);
   if(n<=0)return p[0][1];if(n>=100)return p[5][1];
   for(let i=1;i<p.length;i++){const[a,va]=p[i-1],[b,vb]=p[i];if(n<=b)return va+(n-a)*(vb-va)/(b-a)}return 100}
 function desenharMarcas(boias={}){
-  $('marks').innerHTML=[20,40,60,80].map(x=>`<span class="mk ${boias[x]?'on':''}" style="bottom:${alturaVisual(x)}%">${x}%</span>`).join('')}
+  $('marks').innerHTML=[20,40,60,80].map(x=>{const p=cfg['boia'+x]??x;return `<span class="mk ${boias[x]?'on':''}" style="bottom:${alturaVisual(p)}%">${p}%</span>`}).join('')}
 function atualizarStream(){const y=862*(1-alturaAtual/100),s=$('stream');s.style.display=(bombaLigada&&y>400)?'':'none';s.setAttribute('y2',Math.max(y,400))}
 let nivelMostrado=0,anim;
 function contar(para){cancelAnimationFrame(anim);const de=nivelMostrado,t0=performance.now();
@@ -142,6 +148,13 @@ function iniciar(){
     .forEach(n=>ouvir(db.ref(n),s=>{dados[n]=s.val();cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{if('nivel' in dados&&'status_bomba' in dados)render(dados)})}));
   ouvir(db.ref('configuracao'),s=>{const c=s.val()||{};cfg=Object.assign(cfg,c);if('nivel' in dados&&'status_bomba' in dados)render(dados);
     for(const k in CAMPOS)if(document.activeElement!==$(k))$(k).value=c[k]??CAMPOS[k];
+    if(document.activeElement!==$('nome_local'))$('nome_local').value=c.nome_local||'';
+    const nome=c.nome_local||'Caixa d’Água';$('titulo').textContent=nome;document.title=nome;
+    const gd={caixa_litros:1000,caixa_altura:75,caixa_diam_base:116,caixa_diam_topo:151};
+    for(const k in gd)if(document.activeElement!==$(k))$(k).value=c[k]??gd[k];
+    const Hc=c.caixa_altura??75;
+    [20,40,60,80].forEach(m=>{const id='boia'+m+'_cm';if(document.activeElement!==$(id))$(id).value=c[id]??Math.round((c['boia'+m]??m)*Hc/10)/10});
+    atualizarGeo();
     if(document.activeElement!==$('alerta_sem_subida'))$('alerta_sem_subida').value=c.alerta_sem_subida??40;
     $('bloq_ativo').checked=!!c.bloqueio_ativo;$('bloq_emerg').checked=c.bloqueio_emergencia!==false;
     if(document.activeElement!==$('bloq_ini'))$('bloq_ini').value=hhmm(c.bloqueio_ini_min??1320);
@@ -169,9 +182,12 @@ document.querySelectorAll('[data-modo]').forEach(b=>b.onclick=()=>db.ref('comand
   toast('Modo '+(b.dataset.modo==='AUTO'?'automático':'manual')+' enviado');registrar('Mudou para modo '+(b.dataset.modo==='AUTO'?'automático':'manual'))}));
 
 /* ============ Ajustes ============ */
-const CAMPOS={margem_queda:5,nivel_ligar:40,nivel_desligar:80,timeout_bomba:90,debounce:5,boia20:20,boia40:40,boia60:60,boia80:80,tela0:0,tela20:20,tela40:40,tela60:60,tela80:80,tela100:100};
+const CAMPOS={margem_queda:5,nivel_ligar:40,nivel_desligar:80,timeout_bomba:90,debounce:5,tela0:12,tela20:23,tela40:35,tela60:46,tela80:57,tela100:68};
 function salvar(){
   const v={};for(const k in CAMPOS)v[k]=+$(k).value;
+  v.nome_local=$('nome_local').value.trim().slice(0,24);
+  const g=lerGeo();Object.assign(v,{caixa_litros:g.nom,caixa_altura:g.H,caixa_diam_base:g.db,caixa_diam_topo:g.dt});
+  [20,40,60,80].forEach((m,i)=>{v['boia'+m+'_cm']=g.cm[i];v['boia'+m]=Math.round(g.cm[i]/g.H*100)});
   const r=(x,a,b)=>x>=a&&x<=b;
   v.alerta_sem_subida=+$('alerta_sem_subida').value;
   v.bloqueio_ativo=$('bloq_ativo').checked;v.bloqueio_emergencia=$('bloq_emerg').checked;
@@ -181,6 +197,9 @@ function salvar(){
   else if(!r(v.nivel_desligar,20,100)||v.nivel_desligar<=v.nivel_ligar)erro='Nível para desligar deve ser maior que o de ligar.';
   else if(!r(v.margem_queda,1,20)||!r(v.timeout_bomba,5,180)||!r(v.debounce,1,30))erro='Verifique os valores da automação.';
   else if(!r(v.alerta_sem_subida,5,180))erro='Alerta de bomba sem subir: entre 5 e 180 min.';
+  else if(!(g.H>=20&&g.H<=400&&g.db>=20&&g.db<=500&&g.dt>=20&&g.dt<=500))erro='Medidas da caixa: altura de 20 a 400 cm e diâmetros de 20 a 500 cm.';
+  else if(!(g.nom>=100&&g.nom<=20000))erro='Capacidade nominal: entre 100 e 20000 L.';
+  else if(g.cm.some(x=>!(x>0&&x<g.H)))erro='A altura de cada boia deve ficar entre 0 e a altura da caixa.';
   else if(!(v.boia20<v.boia40&&v.boia40<v.boia60&&v.boia60<v.boia80)||v.boia20<1||v.boia80>100)erro='As boias devem estar em ordem crescente (1–100%).';
   else if(['tela0','tela20','tela40','tela60','tela80','tela100'].some(k=>!r(v[k],0,100)))erro='Calibração visual: valores entre 0 e 100%.';
   else if(v.bloqueio_ativo&&(isNaN(v.bloqueio_ini_min)||isNaN(v.bloqueio_fim_min)||v.bloqueio_ini_min===v.bloqueio_fim_min))erro='Defina início e fim do bloqueio (horários diferentes).';
@@ -189,6 +208,18 @@ function salvar(){
   db.ref('configuracao').update(v).then(()=>{toast('✅ Configuração salva');registrar('Alterou as configurações')}).catch(e=>toast('❌ '+e.message));
 }
 $('btnSalvar').onclick=$('btnSalvar2').onclick=salvar;
+/* geometria da caixa */
+const GEO_IDS=['caixa_litros','caixa_altura','caixa_diam_base','caixa_diam_topo','boia20_cm','boia40_cm','boia60_cm','boia80_cm'];
+const lerGeo=()=>({nom:+$('caixa_litros').value,H:+$('caixa_altura').value,db:+$('caixa_diam_base').value,dt:+$('caixa_diam_topo').value,cm:[20,40,60,80].map(m=>+$('boia'+m+'_cm').value)});
+function atualizarGeo(){
+  const g=lerGeo(),el=$('geoInfo');
+  if(!(g.H>0&&g.db>0&&g.dt>0)){el.textContent='';return}
+  const Rb=g.db/2,Rt=g.dt/2,cheio=volTronco(g.H,g.H,Rb,Rt),k=g.nom>=100?g.nom/cheio:1;
+  let t=`Volume pelas medidas: <b>${Math.round(cheio)} L</b>`+(g.nom>=100?` · nominal ${g.nom} L (ajuste de ${((k-1)*100).toFixed(1)}%)`:'');
+  if(Math.abs(k-1)>0.1)t+='<br>⚠️ Diferença grande: confira as medidas.';
+  g.cm.forEach((c,i)=>{if(c>0&&c<=g.H)t+=`<br>Boia ${i+1}: ${c} cm → <b>${Math.round(c/g.H*100)}%</b> · <b>${Math.round(volTronco(c,g.H,Rb,Rt)*k)} L</b>`});
+  el.innerHTML=t}
+GEO_IDS.forEach(id=>$(id).oninput=atualizarGeo);
 
 /* ============ Push (FCM) ============ */
 const msgOk=firebase.messaging.isSupported&&firebase.messaging.isSupported();

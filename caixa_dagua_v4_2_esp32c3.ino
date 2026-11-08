@@ -90,9 +90,10 @@ const uint8_t PIN_BOIA_80 = 5;
 // DIMENSOES DA CAIXA
 // ======================================================
 
-const float R_BASE = 58.0f;
-const float R_TOPO = 75.5f;
-const float H_UTIL = 75.0f;
+float R_BASE = 58.0f;       // raio da base (cm) - configuravel pelo app
+float R_TOPO = 75.5f;       // raio do topo (cm) - configuravel pelo app
+float H_UTIL = 75.0f;       // altura interna (cm) - configuravel pelo app
+float FATOR_LITROS = 1.0f;   // ajuste para a capacidade nominal da caixa
 
 
 // ======================================================
@@ -1107,7 +1108,7 @@ float calcularLitros(
       R_BASE * R_BASE
     );
 
-  return v / 1000.0f;
+  return v * FATOR_LITROS / 1000.0f;
 }
 
 
@@ -1650,6 +1651,16 @@ bool comandarSonoff(
 // PROCESSAR BOIAS
 // ======================================================
 
+// V4.2: apos reiniciar o ESP nao ha historico para saber se a agua sobe ou desce.
+// Com a bomba desligada a agua so pode estar descendo; usa a margem de queda como no funcionamento normal.
+int nivelDescendoPorBoias() {
+  if (boia80) return cfg.boia80;
+  if (boia60) return cfg.boia80 - cfg.margemQueda;
+  if (boia40) return cfg.boia60 - cfg.margemQueda;
+  if (boia20) return cfg.boia40 - cfg.margemQueda;
+  return -1;
+}
+
 void processarBoias() {
 
   bool valida;
@@ -1750,6 +1761,10 @@ void processarBoias() {
   if (primeiraLeitura) {
 
     primeiraLeitura = false;
+    if (!bombaLigada) {
+      int d = nivelDescendoPorBoias();
+      if (d >= 0) novo = d;
+    }
 
     nivelBruto = novo;
 
@@ -2122,6 +2137,22 @@ if (
   if (v >= 0 && v < 1440) bloqIni = v;
   v = extrairJsonInt(s, "bloqueio_fim_min", bloqFim);
   if (v >= 0 && v < 1440) bloqFim = v;
+
+  // ---- V4.2: geometria da caixa (tronco de cone) ----
+  v = extrairJsonInt(s, "caixa_altura", (int)(H_UTIL + 0.5f));
+  if (v >= 20 && v <= 400) H_UTIL = v;
+  v = extrairJsonInt(s, "caixa_diam_base", (int)(R_BASE * 2 + 0.5f));
+  if (v >= 20 && v <= 500) R_BASE = v / 2.0f;
+  v = extrairJsonInt(s, "caixa_diam_topo", (int)(R_TOPO * 2 + 0.5f));
+  if (v >= 20 && v <= 500) R_TOPO = v / 2.0f;
+  v = extrairJsonInt(s, "caixa_litros", 0);
+  if (v >= 100 && v <= 20000) {
+    float vCheio = (PI * H_UTIL / 3.0f) *
+                   (R_TOPO * R_TOPO + R_TOPO * R_BASE + R_BASE * R_BASE) / 1000.0f;
+    FATOR_LITROS = (vCheio > 0) ? (v / vCheio) : 1.0f;
+  } else {
+    FATOR_LITROS = 1.0f;
+  }
 
 
 
