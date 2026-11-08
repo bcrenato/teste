@@ -59,6 +59,14 @@ auth.onAuthStateChanged(u=>{usuario=u;
 const registrar=acao=>db.ref('log_comandos').push({uid:usuario.uid,usuario:nomeUsuario(),acao,ts:firebase.database.ServerValue.TIMESTAMP});
 
 /* ============ Água ============ */
+const H_UTIL=75,R_BASE=58,R_TOPO=75.5;
+function litrosTronco(n){if(n<=0)return 0;const h=n/100*H_UTIL,r=R_BASE+(R_TOPO-R_BASE)*(h/H_UTIL);return Math.PI*h/3*(r*r+r*R_BASE+R_BASE*R_BASE)/1000}
+// Quando a água desce, a boia desliga e o nível mostrado é (marca - margem de queda): 80→75, 60→55, 40→35, 20→15.
+// O ESP já faz isso; aqui garantimos o mesmo resultado caso o valor chegue como a marca "real".
+function nivelComMargem(n,boias){
+  const margem=cfg.margem_queda??5;
+  for(const m of [80,60,40,20]){const marca=cfg['boia'+m]??m;if(boias&&boias[m]===false&&n>=marca)return marca-margem}
+  return n}
 function alturaVisual(n){
   const p=[0,20,40,60,80,100].map(x=>[x,cfg['tela'+x]??x]);
   if(n<=0)return p[0][1];if(n>=100)return p[5][1];
@@ -109,7 +117,7 @@ function iniciar(){
   function render(d){
     if(d.ultimo_ts!==undefined){if(d.ultimo_ts!==est.lastTs){est.lastTs=d.ultimo_ts;est.ts=d.ultimo_ts*1000}est.tsReal=true}
     else if(d.ultimo_ping!==est.ping){est.ping=d.ultimo_ping;est.ts=Date.now()}
-    if(d.nivel!==undefined)atualizarNivel(+d.nivel,+d.litros||0);
+    if(d.nivel!==undefined){const bruto=+d.nivel,n=nivelComMargem(bruto,d.boias);atualizarNivel(n,n!==bruto?litrosTronco(n):(+d.litros||litrosTronco(n)))}
     desenharMarcas(d.boias);
     $('boias').textContent=[20,40,60,80].map(x=>d.boias?.[x]?'🟢':'⚪').join('');
     bombaLigada=!!d.status_bomba;$('scene').classList.toggle('on',bombaLigada);atualizarStream();

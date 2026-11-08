@@ -82,3 +82,8 @@ label.chk{display:flex;gap:10px;align-items:center;color:var(--tx);font-size:14p
 .lerr{color:#f87171;font-size:13px;min-height:18px;margin-top:10px}
 .link{background:none;border:0;color:var(--blue);font-size:14px;margin-top:14px;padding:8px}
 .hist .l span{display:block}
+
+/* listas com barra de rolagem própria (aba Atividade) */
+.hist{max-height:340px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-right:8px;margin-right:-4px;scrollbar-width:thin;scrollbar-color:var(--blue) transparent}
+.hist::-webkit-scrollbar{width:6px}.hist::-webkit-scrollbar-track{background:transparent}
+.hist::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px}.hist::-webkit-scrollbar-thumb:hover{background:var(--blue)}
