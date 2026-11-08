@@ -1,0 +1,11 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+    "log_comandos": {
+      ".indexOn": ["ts"],
+      "$id": { ".validate": "newData.child('uid').val() === auth.uid" }
+    },
+    "eventos": { ".indexOn": ["ts"] }
+  }
+}
